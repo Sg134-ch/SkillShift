@@ -1,0 +1,62 @@
+# ==============================================================================
+# SkillShift / AML — Git Ignore Configuration
+# ==============================================================================
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Python Cache & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# Large Datasets (Exceeded GitHub 100MB limit & Raw Dumps)
+data/
+*.csv
+*.tsv
+*.parquet
+*.jsonl
+*.zip
+*.tar.gz
+
+# Node / Frontend React
+frontend-react/node_modules/
+frontend-react/dist/
+frontend-react/dist-ssr/
+frontend-react/.vite/
+frontend-react/*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# PyVis & Generated HTML Artifacts
+temp_graph.html
+lib/
+
+# Credentials & Environment Variables
+.env
+.env.*
+!.env.example
+kaggle.json
+*.pem
+*.key
+
+# IDE & Editor Artifacts
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+.gemini/
