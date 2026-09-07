@@ -446,3 +446,192 @@ label {
 .data-table tr:hover td {
   background: var(--bg-subtle);
 }
+
+/* ==========================================================================
+   Portal Switcher UI
+   ========================================================================== */
+.portal-switcher {
+  display: flex;
+  background: var(--bg-surface-elevated);
+  padding: 3px;
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  gap: 4px;
+}
+
+.portal-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 9px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.portal-tab:hover {
+  color: var(--text-primary);
+}
+
+.portal-tab.active {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--border-subtle);
+}
+
+.portal-tab.active.student {
+  color: var(--accent-cyan);
+}
+
+.portal-tab.active.recruiter {
+  color: var(--accent-purple);
+}
+
+/* ==========================================================================
+   File Upload & Drag Drop Zone
+   ========================================================================== */
+.dropzone-container {
+  border: 2px dashed var(--border-strong);
+  border-radius: 14px;
+  padding: 24px 20px;
+  text-align: center;
+  background: var(--bg-subtle);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+.dropzone-container:hover,
+.dropzone-container.drag-active {
+  border-color: var(--accent-cyan);
+  background: rgba(56, 189, 248, 0.04);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.1);
+}
+
+.file-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  font-size: 0.8125rem;
+}
+
+/* ==========================================================================
+   Learning Roadmap Timeline Styles
+   ========================================================================== */
+.roadmap-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: relative;
+  margin-top: 14px;
+}
+
+.roadmap-timeline::before {
+  content: '';
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  left: 20px;
+  width: 2px;
+  background: linear-gradient(180deg, var(--accent-cyan) 0%, var(--accent-indigo) 100%);
+  opacity: 0.4;
+}
+
+.roadmap-step {
+  display: flex;
+  gap: 16px;
+  position: relative;
+}
+
+.roadmap-node {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--bg-surface-elevated);
+  border: 2px solid var(--accent-cyan);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-weight: 800;
+  font-size: 0.875rem;
+  color: var(--accent-cyan);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
+  z-index: 2;
+}
+
+.roadmap-content {
+  flex: 1;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ==========================================================================
+   Leaderboard Rank Indicators
+   ========================================================================== */
+.rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  font-weight: 800;
+  font-size: 0.8125rem;
+}
+
+.rank-gold {
+  background: rgba(251, 191, 36, 0.2);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.4);
+}
+
+.rank-silver {
+  background: rgba(148, 163, 184, 0.2);
+  color: #cbd5e1;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+}
+
+.rank-bronze {
+  background: rgba(217, 119, 6, 0.2);
+  color: #f59e0b;
+  border: 1px solid rgba(217, 119, 6, 0.4);
+}
+
+.rank-default {
+  background: var(--bg-surface-elevated);
+  color: var(--text-muted);
+  border: 1px solid var(--border-subtle);
+}
+
+.rank-shift-up {
+  color: var(--accent-emerald);
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.rank-shift-down {
+  color: var(--accent-rose);
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+

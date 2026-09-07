@@ -103,30 +103,32 @@ flowchart TD
 AML/
 ├── backend/
 │   ├── __init__.py
-│   └── main.py                     # FastAPI server with CORS, matching, graph & drift endpoints
+│   ├── database.py                 # SQLite database schema, connections, and audit log CRUD
+│   ├── main.py                     # FastAPI REST API with multipart file parsing & scoring
+│   └── skillshift.db               # Lightweight embedded SQLite database (auto-generated)
 ├── ml_pipeline/
 │   ├── __init__.py
 │   ├── data_processor.py           # Historical & modern dataset ingestion & preprocessing
-│   └── drift_detector.py           # SkillDriftDetector, Isolation Forest OOD & NetworkX graph
+│   └── drift_detector.py           # Multi-token NLP extractor, centroid clusters, OOD detector
 ├── frontend-react/                 # Modern React 19 + Vite Application
-│   ├── public/                     # Static assets and icons
 │   ├── src/
 │   │   ├── components/
 │   │   │   ├── Dashboard.jsx       # Executive analytics & charts
+│   │   │   ├── Matcher.jsx         # Student resume evaluator & learning roadmap studio
+│   │   │   ├── BatchScreening.jsx  # Recruiter ATS batch screening & false negative leaderboard
+│   │   │   ├── JDAuditor.jsx       # Recruiter JD modernity auditor & optimizer
+│   │   │   ├── CompanyMarket.jsx   # Company hiring demand & tech stack explorer
 │   │   │   ├── DriftRadar.jsx      # Multi-dimensional radar analysis
-│   │   │   ├── Matcher.jsx         # Dual-model side-by-side resume evaluator
 │   │   │   └── NetworkGraph.jsx    # Interactive force-directed vis.js graph
-│   │   ├── data/
-│   │   │   └── mockData.js         # Fallback data for offline resilience
+│   │   ├── context/
+│   │   │   └── AppContext.jsx      # Global state store with localStorage synchronization
 │   │   ├── services/
-│   │   │   └── api.js              # Axios service with auto-port fallback (8000 -> 8001)
-│   │   ├── App.jsx                 # Main layout, dark/light theme & routing
-│   │   ├── index.css               # Design system, glassmorphism tokens & CSS variables
-│   │   └── main.jsx                # React root bootstrap
-│   ├── package.json
-│   └── vite.config.js
-├── frontend/
-│   └── app.py                      # Alternative Python Streamlit multi-page interface
+│   │   │   └── api.js              # Axios service with dual-port fallback & multipart uploads
+│   │   ├── App.jsx                 # Dual-portal router, theme toggle & engine indicator
+│   │   └── index.css               # Design system, glassmorphism tokens & CSS variables
+├── tests/
+│   ├── test_ml_pipeline.py         # PyTest suite for NLP extractor and drift scoring
+│   └── test_api.py                 # PyTest suite for REST endpoints, file parsing, and SQLite DB
 ├── download_data.py                # Automated Kaggle dataset downloader
 ├── requirements.txt                # Python backend & ML dependencies
 ├── .env.example                    # Template environment variables

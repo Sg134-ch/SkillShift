@@ -17,8 +17,10 @@ __pycache__/
 *.so
 .pytest_cache/
 .coverage
-htmlcov/
 .mypy_cache/
+*.db
+*.sqlite3
+*.sqlite
 
 # Large Datasets (Exceeded GitHub 100MB limit & Raw Dumps)
 data/

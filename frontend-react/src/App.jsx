@@ -12,29 +12,50 @@ import {
   Wifi, 
   Zap,
   Layers,
-  Sparkles
+  Sparkles,
+  Building2,
+  Users,
+  FileEdit,
+  GraduationCap,
+  Briefcase
 } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import Matcher from './components/Matcher';
 import NetworkGraph from './components/NetworkGraph';
 import DriftRadar from './components/DriftRadar';
+import CompanyMarket from './components/CompanyMarket';
+import BatchScreening from './components/BatchScreening';
+import JDAuditor from './components/JDAuditor';
 import { checkBackendHealth } from './services/api';
+import { AppProvider } from './context/AppContext';
 
-const Navigation = () => {
+const Navigation = ({ portalMode }) => {
   const location = useLocation();
 
-  const navItems = [
-    { path: '/', label: 'Dashboard', icon: Activity },
+  const studentNav = [
+    { path: '/', label: 'Overview', icon: Activity },
+    { path: '/matcher', label: 'Resume & Roadmap Studio', icon: FileText },
+    { path: '/companies', label: 'Company Demand', icon: Building2 },
     { path: '/graph', label: 'Skill Network', icon: Share2 },
-    { path: '/matcher', label: 'Resume Matcher', icon: FileText },
     { path: '/radar', label: 'Drift Radar', icon: Radio },
   ];
 
+  const recruiterNav = [
+    { path: '/batch-screening', label: 'ATS Batch Screening', icon: Users },
+    { path: '/jd-auditor', label: 'JD Drift Auditor', icon: FileEdit },
+    { path: '/companies', label: 'Market Skill Demand', icon: Building2 },
+    { path: '/graph', label: 'Skill Network', icon: Share2 },
+    { path: '/radar', label: 'Drift Radar', icon: Radio },
+  ];
+
+  const currentNav = portalMode === 'student' ? studentNav : recruiterNav;
+
   return (
     <nav style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-      {navItems.map((item) => {
+      {currentNav.map((item) => {
         const Icon = item.icon;
         const isActive = location.pathname === item.path;
+        const activeColor = portalMode === 'student' ? 'var(--accent-cyan)' : 'var(--accent-purple)';
         return (
           <Link
             key={item.path}
@@ -43,18 +64,18 @@ const Navigation = () => {
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              padding: '8px 16px',
+              padding: '8px 14px',
               borderRadius: '10px',
               textDecoration: 'none',
               fontSize: '0.875rem',
-              fontWeight: isActive ? 600 : 500,
+              fontWeight: isActive ? 700 : 500,
               color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
               background: isActive ? 'var(--bg-surface-elevated)' : 'transparent',
               border: isActive ? '1px solid var(--border-subtle)' : '1px solid transparent',
               transition: 'all 0.15s ease',
             }}
           >
-            <Icon size={17} color={isActive ? 'var(--accent-cyan)' : 'currentColor'} />
+            <Icon size={16} color={isActive ? activeColor : 'currentColor'} />
             <span>{item.label}</span>
           </Link>
         );
@@ -65,6 +86,7 @@ const Navigation = () => {
 
 const App = () => {
   const [theme, setTheme] = useState('dark');
+  const [portalMode, setPortalMode] = useState('student'); // 'student' | 'recruiter'
   const [backendStatus, setBackendStatus] = useState({ isLive: false, port: null, checking: true });
 
   useEffect(() => {
@@ -88,12 +110,15 @@ const App = () => {
   };
 
   return (
-    <Router>
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <AppProvider>
+      <Router>
+        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         
         {/* Top Gradient Banner / Notification */}
         <div style={{ 
-          background: 'linear-gradient(90deg, rgba(2, 132, 199, 0.15), rgba(79, 70, 229, 0.15))', 
+          background: portalMode === 'student' 
+            ? 'linear-gradient(90deg, rgba(2, 132, 199, 0.15), rgba(79, 70, 229, 0.15))'
+            : 'linear-gradient(90deg, rgba(124, 58, 237, 0.15), rgba(79, 70, 229, 0.15))', 
           borderBottom: '1px solid var(--border-subtle)',
           padding: '7px 20px',
           display: 'flex',
@@ -103,9 +128,13 @@ const App = () => {
           color: 'var(--text-secondary)',
           gap: '8px'
         }}>
-          <Sparkles size={14} color="var(--accent-cyan)" />
+          <Sparkles size={14} color={portalMode === 'student' ? 'var(--accent-cyan)' : 'var(--accent-purple)'} />
           <span>
-            <strong>SkillShift Concept Drift Monitor:</strong> Tracking real-time AI & Generative terminology divergence across 2021-2024 job markets.
+            {portalMode === 'student' ? (
+              <><strong>Student & Job Seeker Portal:</strong> Upload your resume, bridge concept drift gaps with AI learning roadmaps, and discover hiring companies.</>
+            ) : (
+              <><strong>Recruiter & Enterprise Portal:</strong> Audit screening false negatives, optimize job descriptions, and benchmark talent market shifts.</>
+            )}
           </span>
         </div>
 
@@ -119,20 +148,20 @@ const App = () => {
           top: 0, 
           zIndex: 50 
         }}>
-          <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '70px' }}>
+          <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '70px', gap: '20px' }}>
             
-            {/* Brand Logo */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
+            {/* Brand Logo & Portal Switcher */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
               <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
                 <div style={{ 
                   width: '38px', 
                   height: '38px', 
                   borderRadius: '12px', 
-                  background: 'var(--gradient-primary)', 
+                  background: portalMode === 'student' ? 'var(--gradient-primary)' : 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)', 
                   display: 'flex', 
                   alignItems: 'center', 
                   justifyContent: 'center',
-                  boxShadow: 'var(--glow-cyan)'
+                  boxShadow: portalMode === 'student' ? 'var(--glow-cyan)' : '0 0 20px rgba(124, 58, 237, 0.35)'
                 }}>
                   <Zap size={22} color="#ffffff" />
                 </div>
@@ -148,9 +177,28 @@ const App = () => {
                 </div>
               </Link>
 
-              {/* Primary Nav Links */}
-              <Navigation />
+              {/* Portal Mode Switcher Toggle */}
+              <div className="portal-switcher">
+                <button
+                  className={`portal-tab ${portalMode === 'student' ? 'active student' : ''}`}
+                  onClick={() => setPortalMode('student')}
+                >
+                  <GraduationCap size={15} />
+                  <span>Student Portal</span>
+                </button>
+                <button
+                  className={`portal-tab ${portalMode === 'recruiter' ? 'active recruiter' : ''}`}
+                  onClick={() => setPortalMode('recruiter')}
+                >
+                  <Briefcase size={15} />
+                  <span>Recruiter Portal</span>
+                </button>
+              </div>
+
             </div>
+
+            {/* Navigation Links */}
+            <Navigation portalMode={portalMode} />
 
             {/* Right Controls: Engine Status, Theme Toggle */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -164,11 +212,11 @@ const App = () => {
               >
                 <div className={`status-dot ${backendStatus.isLive ? 'active' : 'simulated'}`} />
                 <span>
-                  {backendStatus.checking ? 'Probing...' : backendStatus.isLive ? `Live Engine (Port ${backendStatus.port})` : 'Simulation Engine (Active)'}
+                  {backendStatus.checking ? 'Probing...' : backendStatus.isLive ? `Live Engine (${backendStatus.port})` : 'Simulated Engine'}
                 </span>
                 <button 
                   onClick={(e) => { e.stopPropagation(); verifyBackend(); }} 
-                  style={{ display: 'flex', alignItems: 'center', color: 'var(--text-muted)' }}
+                  style={{ display: 'flex', alignItems: 'center', color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}
                   title="Refresh engine connection"
                 >
                   <RefreshCw size={13} style={{ animation: backendStatus.checking ? 'spin 1s linear infinite' : 'none' }} />
@@ -195,7 +243,10 @@ const App = () => {
             <Route path="/" element={<Dashboard isBackendLive={backendStatus.isLive} />} />
             <Route path="/graph" element={<NetworkGraph isBackendLive={backendStatus.isLive} />} />
             <Route path="/matcher" element={<Matcher isBackendLive={backendStatus.isLive} />} />
+            <Route path="/companies" element={<CompanyMarket isBackendLive={backendStatus.isLive} />} />
             <Route path="/radar" element={<DriftRadar isBackendLive={backendStatus.isLive} />} />
+            <Route path="/batch-screening" element={<BatchScreening isBackendLive={backendStatus.isLive} />} />
+            <Route path="/jd-auditor" element={<JDAuditor isBackendLive={backendStatus.isLive} />} />
           </Routes>
         </main>
 
@@ -207,22 +258,23 @@ const App = () => {
                 <Zap size={13} color="#ffffff" />
               </div>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                <strong>SkillShift</strong> — Advanced Concept Drift & Out-of-Distribution Skill Detection Platform
+                <strong>SkillShift</strong> — Advanced Concept Drift & AI Job Market Intelligence Platform
               </p>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
               <span>SentenceTransformers: all-MiniLM-L6-v2</span>
               <span>•</span>
-              <span>Detector: IsolationForest (0.05 contamination)</span>
+              <span>IsolationForest Anomaly Detector</span>
               <span>•</span>
-              <span>Baseline: 2021 DataScientist Corpus</span>
+              <span>2021-2024 Concept Drift Adaptation</span>
             </div>
           </div>
         </footer>
 
       </div>
     </Router>
+  </AppProvider>
   );
 };
 
