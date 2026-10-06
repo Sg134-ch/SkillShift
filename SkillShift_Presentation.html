@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkillShift Platform — 17-Slide Infographic Presentation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-slate: #0f172a;
+      --bg-surface: #1e293b;
+      --bg-card: #1e293b;
+      --accent-cyan: #38bdf8;
+      --accent-purple: #c084fc;
+      --accent-emerald: #34d399;
+      --accent-amber: #fbbf24;
+      --accent-rose: #f43f5e;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --border-subtle: rgba(255, 255, 255, 0.1);
+      --border-strong: rgba(56, 189, 248, 0.3);
+      --glow-cyan: 0 0 25px rgba(56, 189, 248, 0.2);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-slate);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    header {
+      height: 60px;
+      background-color: rgba(30, 41, 59, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 10;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      font-size: 1.125rem;
+    }
+
+    .brand-badge {
+      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      color: #0f172a;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    button {
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      border: 1px solid var(--border-subtle);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    button:hover {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+    }
+
+    button.btn-primary {
+      background: linear-gradient(135deg, #0284c7 0%, #4f46e5 100%);
+      border: none;
+      color: #ffffff;
+    }
+
+    button.btn-primary:hover {
+      box-shadow: var(--glow-cyan);
+      opacity: 0.95;
+    }
+
+    button.btn-emerald {
+      background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+      border: none;
+      color: #ffffff;
+    }
+
+    select {
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      border: 1px solid var(--border-subtle);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 30px 40px;
+      position: relative;
+    }
+
+    .slide-viewport {
+      width: 100%;
+      max-width: 1280px;
+      height: 680px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      padding: 40px 50px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      background-image: radial-gradient(circle at 90% 10%, rgba(56, 189, 248, 0.08) 0%, transparent 40%),
+                        radial-gradient(circle at 10% 90%, rgba(168, 85, 247, 0.08) 0%, transparent 40%);
+    }
+
+    .slide-header {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .slide-category {
+      font-size: 0.8125rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      color: var(--accent-cyan);
+      text-transform: uppercase;
+    }
+
+    .slide-title {
+      font-size: 2.25rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .slide-subtitle {
+      font-size: 1.0625rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .slide-body {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 40px;
+      align-items: center;
+      margin: 20px 0;
+    }
+
+    .bullet-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .bullet-item {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-subtle);
+      padding: 16px 20px;
+      border-radius: 12px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      font-size: 1rem;
+      line-height: 1.5;
+      color: var(--text-primary);
+      transition: all 0.2s ease;
+    }
+
+    .bullet-item:hover {
+      border-color: var(--accent-cyan);
+      transform: translateX(4px);
+    }
+
+    .bullet-icon {
+      color: var(--accent-cyan);
+      font-weight: 800;
+      font-size: 1.125rem;
+      line-height: 1;
+      margin-top: 2px;
+    }
+
+    .kpi-card {
+      background: linear-gradient(180deg, rgba(56, 189, 248, 0.12) 0%, rgba(15, 23, 42, 0.8) 100%);
+      border: 1px solid var(--accent-cyan);
+      border-radius: 16px;
+      padding: 36px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      box-shadow: var(--glow-cyan);
+    }
+
+    .kpi-val {
+      font-size: 3.25rem;
+      font-weight: 800;
+      color: var(--accent-cyan);
+      line-height: 1.1;
+      margin-bottom: 8px;
+    }
+
+    .kpi-lbl {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .kpi-sub {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 16px;
+    }
+
+    .slide-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--border-subtle);
+      padding-top: 16px;
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      height: 4px;
+      background: var(--bg-slate);
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      border-bottom-left-radius: 20px;
+      border-bottom-right-radius: 20px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+      transition: width 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <span>SkillShift</span>
+      <span class="brand-badge">17-Slide Presentation Deck</span>
+    </div>
+
+    <div class="controls">
+      <button id="btn-prev" onclick="prevSlide()">‹ Previous</button>
+
+      <select id="slide-select" onchange="goToSlide(this.value)">
+      </select>
+
+      <button id="btn-next" onclick="nextSlide()">Next ›</button>
+      
+      <button class="btn-primary" onclick="downloadPPTX()">
+        ⬇ Download PPTX
+      </button>
+
+      <button class="btn-emerald" onclick="downloadODF()">
+        ⬇ Download ODF / ODP
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <div class="slide-viewport">
+      <div class="slide-header">
+        <div class="slide-category" id="slide-cat">TITLE SLIDE</div>
+        <h1 class="slide-title" id="slide-title">SkillShift Platform</h1>
+        <div class="slide-subtitle" id="slide-sub">Adaptive Job-Matching & Concept Drift Detection Platform</div>
+      </div>
+
+      <div class="slide-body">
+        <div class="bullet-list" id="slide-bullets">
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-val" id="kpi-val">SkillShift</div>
+          <div class="kpi-lbl" id="kpi-lbl">Production Platform</div>
+          <div class="kpi-sub" id="slide-counter">Slide 1 of 17</div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>SkillShift ML Intelligence • Adaptive Labor Market Engine</span>
+        <span>Confidential & Executive Technical Review</span>
+      </div>
+
+      <div class="progress-bar-container">
+        <div class="progress-bar-fill" id="progress-fill" style="width: 5.88%;"></div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const SLIDES = [
+      {
+        num: 1,
+        title: "SkillShift Platform",
+        subtitle: "Adaptive Job-Matching & Concept Drift Detection Platform",
+        category: "Title Slide",
+        bullets: [
+          "Solving the ATS Stale Penalty for Modern Tech Labor Markets",
+          "Dual-Model Evaluation (2021 Historical Baseline vs. 2024 Adapted Model)",
+          "Real-Time Out-of-Distribution (OOD) Vocabulary Emergence Monitoring"
+        ],
+        kpiCallout: "SkillShift v1.0",
+        kpiLabel: "Production Platform"
+      },
+      {
+        num: 2,
+        title: "Executive Summary & Paradigm Shift",
+        subtitle: "Generative AI & Modern Stack Evolution (2021 – 2026)",
+        category: "Market Context",
+        bullets: [
+          "2021 Baseline: Monolithic Java/R/Hadoop stacks dominate traditional ATS training sets.",
+          "2024 Shift: Explosion of LLMs, LangChain, RAG, Vector DBs, Next.js 14, and Tailwind CSS.",
+          "The Disconnect: Qualified modern candidates suffer false negative ATS rejections due to legacy dictionary baselines.",
+          "SkillShift Value: Automates dynamic vocabulary expansion and eliminates stale penalty scores."
+        ],
+        kpiCallout: "+310%",
+        kpiLabel: "GenAI Skill Growth"
+      },
+      {
+        num: 3,
+        title: "The 'ATS Stale Penalty' Problem",
+        subtitle: "Quantifying Semantic Divergence & Candidate Deflation",
+        category: "Problem Analysis",
+        bullets: [
+          "Stale Model Deflation: Modern candidates flagged as Out-of-Distribution (OOD) noise receive scores <30%.",
+          "Vocabulary Degradation: Static ATS dictionaries decay by ~15-20% annually in fast-moving tech domains.",
+          "Distorted Pipelines: Talent acquisition teams miss top 5% modern engineering talent.",
+          "Empirical Evidence: 37.5% of modern candidate rejections are algorithmic false negatives."
+        ],
+        kpiCallout: "-48.5%",
+        kpiLabel: "Average Score Deflation"
+      },
+      {
+        num: 4,
+        title: "The SkillShift Dual-Model Solution",
+        subtitle: "Side-by-Side Diagnostic & Dynamic Assimilation",
+        category: "Core Architecture",
+        bullets: [
+          "Stale Model (2021): Evaluates candidates strictly against historical keyword/vector baselines.",
+          "Adapted Model (2024): Dynamically incorporates emergent OOD tokens and semantic clusters.",
+          "Diagnostic Delta: Quantifies score recovery (e.g., 28% Stale → 94% Adapted = +66% Recovery).",
+          "Zero Downtime: Continuous baseline vocabulary updating without full model re-training."
+        ],
+        kpiCallout: "+66.4%",
+        kpiLabel: "Average Score Recovery"
+      },
+      {
+        num: 5,
+        title: "End-to-End System Architecture",
+        subtitle: "Modular Multi-Tier Platform Topology",
+        category: "System Design",
+        bullets: [
+          "Data Layer: Ingests historical (2021 Kaggle DataScientist) & modern (2023-2024 LinkedIn Jobs) corpora.",
+          "ML Pipeline: SentenceTransformers encoder, IsolationForest detector, NetworkX co-occurrence graph.",
+          "Backend Service: FastAPI REST API (Port 8000/8001) with multipart file parsing & SQLite audit logging.",
+          "Presentation Layer: Glassmorphic React 19 + Vite frontend and Streamlit alternative UI."
+        ],
+        kpiCallout: "4 Tiers",
+        kpiLabel: "Decoupled Architecture"
+      },
+      {
+        num: 6,
+        title: "Machine Learning: Semantic Embeddings",
+        subtitle: "Dense Vector Representations & Hybrid Fallback",
+        category: "ML Deep Dive",
+        bullets: [
+          "Primary Encoder: sentence-transformers/all-MiniLM-L6-v2 mapping text to 384-dimensional dense vectors.",
+          "Cosine Similarity: Computes semantic alignment between job requirements and candidate profiles.",
+          "Lightweight Fallback: Custom Subword Hash-Based Semantic Encoder for zero-dependency offline resilience.",
+          "High-Throughput: Vector similarity computation executed in <15ms per candidate profile."
+        ],
+        kpiCallout: "384-Dim",
+        kpiLabel: "Dense Embedding Vectors"
+      },
+      {
+        num: 7,
+        title: "Concept Drift: Isolation Forest Detector",
+        subtitle: "Out-of-Distribution (OOD) Emergence Identification",
+        category: "Anomaly Detection",
+        bullets: [
+          "Algorithm: sklearn.ensemble.IsolationForest with 5% contamination factor.",
+          "Baseline Fitting: Trained on historical baseline embedding space to map standard vocabulary boundaries.",
+          "Anomaly Scoring: Isolates novel technical phrases (e.g., LangChain, LoRA, vLLM) as OOD signals.",
+          "Automatic Assimilation: Accepted OOD signals trigger dynamic graph node creation."
+        ],
+        kpiCallout: "5%",
+        kpiLabel: "Contamination Factor"
+      },
+      {
+        num: 8,
+        title: "Knowledge Graph Dynamics",
+        subtitle: "NetworkX & Vis.js Force-Directed Co-Occurrence",
+        category: "Graph Analytics",
+        bullets: [
+          "Graph Modeling: NetworkX weighted undirected graph mapping skill co-occurrences in job postings.",
+          "Inter-Domain Bridges: Reveals emergence of cross-category nodes (e.g., Python ↔ LangChain ↔ Vector DBs).",
+          "Interactive UI: Physics-enabled force-directed visualization (Vis.js) with cluster color-coding.",
+          "Cluster Categories: Generative AI, Data Science, Deep Learning, MLOps, Modern Web, Legacy Stacks."
+        ],
+        kpiCallout: "1,420+",
+        kpiLabel: "Active Skill Bridges"
+      },
+      {
+        num: 9,
+        title: "Temporal Vocabulary Adaptation",
+        subtitle: "Mathematical Model Normalization & Centroid Shift",
+        category: "Mathematical Formulation",
+        bullets: [
+          "Baseline Vocab expansion: Base_Vocab(t+1) = Base_Vocab(t) U Accepted_OOD_Skills.",
+          "Centroid Calculation: Profile vectors normalized to eliminate structural penalty on non-legacy candidates.",
+          "Reverse Drift Penalty: Detects legacy tools (Hadoop, SVN, SOAP) declining in contemporary role specs.",
+          "Greedy Tokenization: Longest-match multi-token regex parser for phrases like 'RAG Architecture'."
+        ],
+        kpiCallout: "100+",
+        kpiLabel: "Ontology Entities"
+      },
+      {
+        num: 10,
+        title: "Platform Module 1: Executive Dashboard",
+        subtitle: "Real-Time Observability & Timeline Playback",
+        category: "User Interface",
+        bullets: [
+          "KPI Cards: Active tracking of 148,200+ job postings, +36.3% vocabulary growth, 480+ OOD skills.",
+          "Interactive Timeline: Playable 2022–2025 timeline slider demonstrating month-by-month vocabulary expansion.",
+          "Visual Analytics: Area charts for cumulative vocabulary inflow & bar charts for monthly surge events.",
+          "Domain Breakdown: Shift intensity metrics across GenAI, MLOps, Modern Web, and Classical Data Science."
+        ],
+        kpiCallout: "Live",
+        kpiLabel: "Observability"
+      },
+      {
+        num: 11,
+        title: "Platform Module 2: Matcher & Roadmap Studio",
+        subtitle: "Candidate Diagnostic & Personalized AI Learning Track",
+        category: "Student Portal",
+        bullets: [
+          "Dual-Score Cards: Direct comparison of Stale Score vs. Adapted Score with explicit penalty rationale.",
+          "File Uploader: Drag & drop uploader for PDF, DOCX, TXT resumes with client/server parsing.",
+          "Skill Matrix: Color-coded breakdown of Flagged OOD Skills vs. Recognized Baseline Core.",
+          "AI Learning Roadmap: 4-stage step-by-step learning track for missing modern skills with verified resources."
+        ],
+        kpiCallout: "4 Stages",
+        kpiLabel: "AI Roadmap Track"
+      },
+      {
+        num: 12,
+        title: "Platform Module 3: ATS Batch Screening",
+        subtitle: "False Negative Leaderboard & Recruiter Intelligence",
+        category: "Recruiter Portal",
+        bullets: [
+          "Batch Ingestion: Ingest and screen 1 to 50+ candidate resumes simultaneously.",
+          "Rank Shift Audit: Highlights rank shifts (e.g., #7 Legacy Rank → #1 Adapted Rank).",
+          "False Negative Rescuer: Identifies and flags top-tier candidates falsely rejected by legacy ATS.",
+          "Audit CSV Export: One-click export of complete candidate cohort screening metrics."
+        ],
+        kpiCallout: "37.5%",
+        kpiLabel: "False Negatives Recovered"
+      },
+      {
+        num: 13,
+        title: "Platform Module 4: JD Drift Auditor",
+        subtitle: "Job Description Optimization & Reach Maximization",
+        category: "Recruiter Portal",
+        bullets: [
+          "Modernity Score: Audits company job specifications for obsolete keywords (Hadoop, SVN, Weka, Java 8).",
+          "Reach Penalty Metric: Quantifies lost candidate reach (e.g., '-68% Modern Candidate Reach').",
+          "Suggested Replacements: Maps legacy tools to modern cloud/AI alternatives (SVN → Git/CI-CD).",
+          "AI Spec Optimizer: One-click generation and copying of modernized, candidate-optimized job descriptions."
+        ],
+        kpiCallout: "96/100",
+        kpiLabel: "Optimized Reach Score"
+      },
+      {
+        num: 14,
+        title: "Market Demand & Company Explorer",
+        subtitle: "Enterprise Hiring Demand & Tech Stack Benchmarking",
+        category: "Market Intelligence",
+        bullets: [
+          "Tier 1 Enterprise Coverage: Databricks, OpenAI, Anthropic, Scale AI, Snowflake, Stripe, Mistral AI, Microsoft.",
+          "Tech Stack Intelligence: Maps required baseline skills vs. emerging OOD skills by hiring company.",
+          "Role Matching: Computes candidate alignment % against active company hiring profiles.",
+          "Salary & Urgency Insights: Tracks salary bands ($165k–$310k) and hiring urgency levels."
+        ],
+        kpiCallout: "8 Giants",
+        kpiLabel: "Benchmark Companies"
+      },
+      {
+        num: 15,
+        title: "Backend API & Database Persistence",
+        subtitle: "FastAPI REST Microservice & Embedded SQLite Store",
+        category: "Backend Engineering",
+        bullets: [
+          "FastAPI REST Router: Dual-port probing (8000/8001) with CORS middleware and Pydantic validation.",
+          "Multipart Parser: High-speed server-side document extraction for PDF, DOCX, and plain text.",
+          "SQLite Persistence: Auto-created database (`skillshift.db`) logging screening runs and JD audits.",
+          "Audit History CRUD: Endpoints for historical screening run retrieval and audit log inspection."
+        ],
+        kpiCallout: "SQLite",
+        kpiLabel: "Audit Log Storage"
+      },
+      {
+        num: 16,
+        title: "Empirical Benchmark Results",
+        subtitle: "Quantitative Performance & Verification Metrics",
+        category: "Results & Evaluation",
+        bullets: [
+          "Score Recovery: Modern candidates achieve average +66.4% score recovery under adapted evaluation.",
+          "False Negative Rescue: Successfully identifies 37.5% of high-fit candidates discarded by legacy ATS.",
+          "JD Optimization: Upgrading job descriptions boosts modern applicant reach by up to +68%.",
+          "API Latency: Average endpoint response time <45ms (FastAPI) and graph render <120ms (Vis.js)."
+        ],
+        kpiCallout: "<45ms",
+        kpiLabel: "API Response Latency"
+      },
+      {
+        num: 17,
+        title: "Deployment & Future Vision",
+        subtitle: "Zero-Crash Fallback, Agentic Graphs & MCP Protocol",
+        category: "Future Roadmap",
+        bullets: [
+          "Offline Resilience: Instant seamless fallback to hash encoders & mock datasets when offline.",
+          "Quickstart Deployment: Simple `pip install -r requirements.txt` & `npm run dev` startup.",
+          "Agentic Integration: Expansion towards LangGraph multi-agent graph workflows & CrewAI.",
+          "MCP Protocol: Integrating Model Context Protocol (MCP) tool bindings for enterprise AI assistants."
+        ],
+        kpiCallout: "v2.0",
+        kpiLabel: "Agentic & MCP Vision"
+      }
+    ];
+
+    let currentIndex = 0;
+
+    function renderSlide(index) {
+      const slide = SLIDES[index];
+      document.getElementById('slide-cat').innerText = slide.category.toUpperCase();
+      document.getElementById('slide-title').innerText = slide.title;
+      document.getElementById('slide-sub').innerText = slide.subtitle;
+      document.getElementById('kpi-val').innerText = slide.kpiCallout;
+      document.getElementById('kpi-lbl').innerText = slide.kpiLabel;
+      document.getElementById('slide-counter').innerText = `Slide ${slide.num} of 17`;
+
+      const bulletsContainer = document.getElementById('slide-bullets');
+      bulletsContainer.innerHTML = slide.bullets.map(b => `
+        <div class="bullet-item">
+          <span class="bullet-icon">⚡</span>
+          <span>${b}</span>
+        </div>
+      `).join('');
+
+      document.getElementById('slide-select').value = index;
+      document.getElementById('progress-fill').style.width = `${((index + 1) / SLIDES.length) * 100}%`;
+    }
+
+    function nextSlide() {
+      if (currentIndex < SLIDES.length - 1) {
+        currentIndex++;
+        renderSlide(currentIndex);
+      }
+    }
+
+    function prevSlide() {
+      if (currentIndex > 0) {
+        currentIndex--;
+        renderSlide(currentIndex);
+      }
+    }
+
+    function goToSlide(index) {
+      currentIndex = parseInt(index);
+      renderSlide(currentIndex);
+    }
+
+    // CRC32 Calculation
+    function crc32(str) {
+      let c = 0 ^ (-1);
+      for (let i = 0; i < str.length; i++) {
+        c = (c >>> 8) ^ crcTable[(c ^ str.charCodeAt(i)) & 0xFF];
+      }
+      return (c ^ (-1)) >>> 0;
+    }
+    const crcTable = new Uint32Array(256);
+    for (let i = 0; i < 256; i++) {
+      let c = i;
+      for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      crcTable[i] = c;
+    }
+
+    // Pure JS Zip Builder (STORED Mode = 0)
+    function buildZipBlob(files) {
+      let localParts = [];
+      let cdParts = [];
+      let offset = 0;
+
+      files.forEach(f => {
+        const nameBytes = new TextEncoder().encode(f.name);
+        const dataBytes = new TextEncoder().encode(f.content);
+        const len = dataBytes.length;
+        const crc = crc32(f.content);
+
+        // Local Header (30 bytes)
+        const lh = new Uint8Array(30 + nameBytes.length);
+        const dvL = new DataView(lh.buffer);
+        dvL.setUint32(0, 0x04034b50, true);
+        dvL.setUint16(4, 10, true);
+        dvL.setUint16(6, 0, true);
+        dvL.setUint16(8, 0, true); // Stored
+        dvL.setUint32(14, crc, true);
+        dvL.setUint32(18, len, true);
+        dvL.setUint32(22, len, true);
+        dvL.setUint16(26, nameBytes.length, true);
+        lh.set(nameBytes, 30);
+
+        localParts.push(lh);
+        localParts.push(dataBytes);
+
+        // CD Header (46 bytes)
+        const cd = new Uint8Array(46 + nameBytes.length);
+        const dvC = new DataView(cd.buffer);
+        dvC.setUint32(0, 0x02014b50, true);
+        dvC.setUint16(4, 20, true);
+        dvC.setUint16(6, 10, true);
+        dvC.setUint16(8, 0, true);
+        dvC.setUint16(10, 0, true);
+        dvC.setUint32(16, crc, true);
+        dvC.setUint32(20, len, true);
+        dvC.setUint32(24, len, true);
+        dvC.setUint16(28, nameBytes.length, true);
+        dvC.setUint32(42, offset, true);
+        cd.set(nameBytes, 46);
+
+        cdParts.push(cd);
+        offset += lh.length + dataBytes.length;
+      });
+
+      const cdOffset = offset;
+      let cdSize = 0;
+      cdParts.forEach(c => cdSize += c.length);
+
+      // EOCD (22 bytes)
+      const eocd = new Uint8Array(22);
+      const dvE = new DataView(eocd.buffer);
+      dvE.setUint32(0, 0x06054b50, true);
+      dvE.setUint16(8, files.length, true);
+      dvE.setUint16(10, files.length, true);
+      dvE.setUint32(12, cdSize, true);
+      dvE.setUint32(16, cdOffset, true);
+
+      const all = [...localParts, ...cdParts, eocd];
+      return new Blob(all, { type: 'application/octet-stream' });
+    }
+
+    function downloadPPTX() {
+      let typesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/>`;
+      let presXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:presentation xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><p:sldIdLst>`;
+      let presRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">`;
+
+      const files = [];
+
+      SLIDES.forEach((s, idx) => {
+        const slideNum = idx + 1;
+        typesXml += `<Override PartName="/ppt/slides/slide${slideNum}.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>`;
+        presXml += `<p:sldId id="${255 + slideNum}" r:id="rId${slideNum}"/>`;
+        presRels += `<Relationship Id="rId${slideNum}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide${slideNum}.xml"/>`;
+        
+        const bulletsText = s.bullets.map(b => `• ${b}`).join(' ');
+        const slideXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:sld xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:grpSpPr/></p:nvGrpSpPr><p:sp><p:nvSpPr><p:cNvPr id="2" name="Title"/><p:cSpPr/><p:nvPr/></p:nvSpPr><p:spPr/><p:txBody><a:bodyPr/><a:lstStyle/><a:p><a:r><a:t>${s.category.toUpperCase()}: ${s.title}</a:t></a:r></a:p><a:p><a:r><a:t>${s.subtitle}</a:t></a:r></a:p><a:p><a:r><a:t>${bulletsText}</a:t></a:r></a:p><a:p><a:r><a:t>KPI: ${s.kpiCallout} - ${s.kpiLabel} (Slide ${slideNum} of 17)</a:t></a:r></a:p></p:txBody></p:sp></p:spTree></p:cSld></p:sld>`;
+        files.push({ name: `ppt/slides/slide${slideNum}.xml`, content: slideXml });
+      });
+
+      typesXml += `</Types>`;
+      presXml += `</p:sldIdLst></p:presentation>`;
+      presRels += `</Relationships>`;
+
+      files.push({ name: '[Content_Types].xml', content: typesXml });
+      files.push({ name: '_rels/.rels', content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/></Relationships>` });
+      files.push({ name: 'ppt/presentation.xml', content: presXml });
+      files.push({ name: 'ppt/_rels/presentation.xml.rels', content: presRels });
+
+      const blob = buildZipBlob(files);
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'SkillShift_Presentation.pptx';
+      a.click();
+    }
+
+    function downloadODF() {
+      const files = [
+        { name: 'mimetype', content: 'application/vnd.oasis.opendocument.presentation' },
+        { name: 'META-INF/manifest.xml', content: `<?xml version="1.0" encoding="UTF-8"?><manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.2"><manifest:file-entry manifest:full-path="/" manifest:version="1.2" manifest:media-type="application/vnd.oasis.opendocument.presentation"/><manifest:file-entry manifest:full-path="content.xml" manifest:media-type="text/xml"/><manifest:file-entry manifest:full-path="styles.xml" manifest:media-type="text/xml"/><manifest:file-entry manifest:full-path="meta.xml" manifest:media-type="text/xml"/></manifest:manifest>` },
+        { name: 'meta.xml', content: `<?xml version="1.0" encoding="UTF-8"?><office:document-meta xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:dc="http://purl.org/dc/elements/1.1/" office:version="1.2"><office:meta><dc:title>SkillShift Presentation</dc:title></office:meta></office:document-meta>` },
+        { name: 'styles.xml', content: `<?xml version="1.0" encoding="UTF-8"?><office:document-styles xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" office:version="1.2"><office:styles><style:style style:name="Default" style:family="presentation"/></office:styles></office:document-styles>` }
+      ];
+
+      let slidesXml = '';
+      SLIDES.forEach(s => {
+        const bulletsXml = s.bullets.map(b => `<text:p>•  ${b}</text:p>`).join('');
+        slidesXml += `<draw:page draw:name="Slide_${s.num}"><draw:frame><draw:text-box><text:p>${s.category.toUpperCase()}</text:p><text:h>${s.title}</text:h><text:p>${s.subtitle}</text:p>${bulletsXml}</draw:text-box></draw:frame></draw:page>`;
+      });
+
+      files.push({
+        name: 'content.xml',
+        content: `<?xml version="1.0" encoding="UTF-8"?><office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0" office:version="1.2"><office:body><office:presentation>${slidesXml}</office:presentation></office:body></office:document-content>`
+      });
+
+      const blob = buildZipBlob(files);
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'SkillShift_Presentation.odf';
+      a.click();
+    }
+
+    // Populate dropdown
+    const selectEl = document.getElementById('slide-select');
+    SLIDES.forEach((s, idx) => {
+      const opt = document.createElement('option');
+      opt.value = idx;
+      opt.innerText = `Slide ${s.num}: ${s.title}`;
+      selectEl.appendChild(opt);
+    });
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'Space') nextSlide();
+      if (e.key === 'ArrowLeft') prevSlide();
+    });
+
+    // Initial render
+    renderSlide(0);
+  </script>
+</body>
+</html>

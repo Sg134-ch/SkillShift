@@ -1,0 +1,17 @@
+Avery Jones
+DevOps Engineer | Candidate ID: #1009
+
+Contact: avery.jones@example.com
+
+SUMMARY
+Passionate DevOps Engineer with a focus on delivering high-quality software and systems. Proven track record in solving complex technical problems.
+
+TECHNICAL SKILLS
+PHP 5, Data Structures, Java, Oracle DB, Perl, jQuery, SVN, Visual Basic
+
+PROFESSIONAL EXPERIENCE
+Experience: 10+ years maintaining enterprise infrastructure.
+Key achievements include managing large monolithic codebases and coordinating with overseas teams using SVN.
+
+EDUCATION
+B.S. Computer Science, State University, 2018

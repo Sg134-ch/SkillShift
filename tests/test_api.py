@@ -22,7 +22,7 @@ def test_resume_matching_endpoint():
         "resume_text": "Experienced Python and PyTorch engineer building LLM applications with LangChain, Docker, and FastAPI.",
         "target_job_title": "Machine Learning Engineer"
     }
-    response = client.post("/api/match-resume", json=payload)
+    response = client.post("/api/match", json=payload)
     assert response.status_code == 200
     data = response.json()
     assert "score_before_adaptation" in data
@@ -33,18 +33,13 @@ def test_resume_matching_endpoint():
 
 def test_batch_screening_endpoint_and_db_persistence():
     payload = {
-        "target_role": "Machine Learning Engineer",
+        "target_job_title": "Machine Learning Engineer",
         "candidates": [
             {
                 "id": "cand-test-1",
                 "name": "Sarah Chen",
                 "title": "Senior AI Specialist",
-                "resumeSnippet": "Pioneered production RAG pipelines using LangChain, Vector Databases, LoRA Fine-Tuning, Docker, and FastAPI.",
-                "legacyAtsScore": 0.45,
-                "adaptedModelScore": 0.94,
-                "rankShift": 12,
-                "verdict": "FALSE NEGATIVE RECOVERED",
-                "flaggedSkills": ["LangChain", "RAG Architecture", "LoRA Fine-Tuning"]
+                "resume_text": "Pioneered production RAG pipelines using LangChain, Vector Databases, LoRA Fine-Tuning, Docker, and FastAPI."
             }
         ]
     }
@@ -58,12 +53,12 @@ def test_batch_screening_endpoint_and_db_persistence():
     hist_response = client.get("/api/history/screenings")
     assert hist_response.status_code == 200
     hist_data = hist_response.json()
-    assert len(hist_data) > 0
+    assert len(hist_data.get("history", [])) > 0
 
 def test_jd_audit_endpoint_and_db_persistence():
     payload = {
-        "raw_text": "Looking for Java 8, Subversion, SOAP web services developer with Bare-metal server management experience.",
-        "target_role": "Software Engineer"
+        "jd_text": "Looking for Java 8, Subversion, SOAP web services developer with Bare-metal server management experience.",
+        "target_job_title": "Software Engineer"
     }
     response = client.post("/api/audit-jd", json=payload)
     assert response.status_code == 200
@@ -76,10 +71,11 @@ def test_jd_audit_endpoint_and_db_persistence():
     hist_response = client.get("/api/history/audits")
     assert hist_response.status_code == 200
     hist_data = hist_response.json()
-    assert len(hist_data) > 0
+    assert len(hist_data.get("history", [])) > 0
 
 def test_parse_document_content_helper():
     text_content = b"Candidate John Doe with expertise in Python, PyTorch, and Docker."
     parsed = parse_document_content("resume.txt", text_content)
     assert "Candidate John Doe" in parsed
     assert "PyTorch" in parsed
+

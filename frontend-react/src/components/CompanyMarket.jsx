@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useApp } from '../context/AppContext';
 import { 
   Building2, 
   Search, 
@@ -45,11 +46,13 @@ const TRENDING_SKILLS = [
 
 const CompanyMarket = ({ isBackendLive }) => {
   const navigate = useNavigate();
+  const { applyToJob } = useApp();
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDomain, setSelectedDomain] = useState('all');
   const [selectedSkill, setSelectedSkill] = useState('');
+  const [appliedJobs, setAppliedJobs] = useState(new Set());
 
   const loadCompanies = async () => {
     setLoading(true);
@@ -75,6 +78,8 @@ const CompanyMarket = ({ isBackendLive }) => {
       setSearchQuery('');
     }
   };
+
+  const handleApply = (company) => { applyToJob(company); setAppliedJobs(prev => new Set([...prev, company.id])); };
 
   const handleTestFit = (company) => {
     navigate('/matcher', {
@@ -324,21 +329,31 @@ const CompanyMarket = ({ isBackendLive }) => {
                 </div>
               </div>
 
-              {/* Action: Test Fit in Matcher */}
-              <button 
-                onClick={() => handleTestFit(comp)}
-                className="btn-primary" 
-                style={{ width: '100%', padding: '9px 14px', fontSize: '0.8125rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}
-              >
-                <span>Test Fit against this Role</span>
-                <ArrowRight size={14} />
-              </button>
+              {/* Actions: Test Fit & Apply */}
+              <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
+                <button 
+                  onClick={() => handleTestFit(comp)}
+                  className="btn-secondary" 
+                  style={{ flex: 1, padding: '9px 14px', fontSize: '0.8125rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}
+                >
+                  <span>Test Fit</span>
+                </button>
+                
+                <button 
+                  onClick={() => handleApply(comp)}
+                  disabled={appliedJobs.has(comp.id)}
+                  className={appliedJobs.has(comp.id) ? "btn-outline" : "btn-primary"} 
+                  style={{ flex: 1, padding: '9px 14px', fontSize: '0.8125rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}
+                >
+                  <span>{appliedJobs.has(comp.id) ? 'Applied' : 'Apply Now'}</span>
+                  {appliedJobs.has(comp.id) ? <CheckCircle2 size={14} color="var(--accent-emerald)" /> : <ArrowRight size={14} />}
+                </button>
+              </div>
 
             </div>
           ))}
         </div>
       )}
-
     </div>
   );
 };

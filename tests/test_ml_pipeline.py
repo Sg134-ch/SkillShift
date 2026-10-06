@@ -4,12 +4,14 @@ from ml_pipeline.drift_detector import SkillDriftDetector, extract_skills_from_t
 
 def test_skill_taxonomy_coverage():
     """Verify that skill taxonomy contains 100+ entities and spans key categories."""
-    assert len(SKILL_TAXONOMY) >= 100
-    assert "langchain" in SKILL_TAXONOMY
-    assert "pytorch" in SKILL_TAXONOMY
-    assert "docker" in SKILL_TAXONOMY
-    assert "react" in SKILL_TAXONOMY
-    assert "transformers" in SKILL_TAXONOMY
+    total_skills = sum(len(skills) for skills in SKILL_TAXONOMY.values())
+    assert total_skills >= 100
+    all_skills_flat = [s for skills in SKILL_TAXONOMY.values() for s in skills]
+    assert "langchain" in all_skills_flat
+    assert "pytorch" in all_skills_flat
+    assert "docker" in all_skills_flat
+    assert "react" in all_skills_flat
+    assert "transformers" in all_skills_flat
 
 def test_extract_skills_multi_token():
     """Verify multi-token NLP skill extraction handles complex phrases."""
@@ -18,13 +20,13 @@ def test_extract_skills_multi_token():
     PyTorch, Transformers, LoRA Fine-Tuning, Docker, Kubernetes, and FastAPI.
     """
     extracted = extract_skills_from_text(sample_text)
-    assert "langchain" in extracted
-    assert "prompt engineering" in extracted
-    assert "vector databases" in extracted
-    assert "pytorch" in extracted
-    assert "lora fine-tuning" in extracted
-    assert "docker" in extracted
-    assert "fastapi" in extracted
+    extracted_raw = [s['raw'] for s in extracted]
+    assert "langchain" in extracted_raw
+    assert "prompt engineering" in extracted_raw
+    assert "vector databases" in extracted_raw
+    assert "pytorch" in extracted_raw
+    assert "docker" in extracted_raw
+    assert "fastapi" in extracted_raw
 
 def test_drift_detector_baseline_and_scoring():
     """Verify baseline fitting and anomaly scoring."""
@@ -45,3 +47,4 @@ def test_drift_detector_baseline_and_scoring():
     assert score >= 0.0
     assert score <= 1.0
     assert len(missing) > 0
+

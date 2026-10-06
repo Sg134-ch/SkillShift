@@ -1,0 +1,17 @@
+Taylor Thomas
+Backend Developer | Candidate ID: #1017
+
+Contact: taylor.thomas@example.com
+
+SUMMARY
+Passionate Backend Developer with a focus on delivering high-quality software and systems. Proven track record in solving complex technical problems.
+
+TECHNICAL SKILLS
+AWS, Linux, Java, PyTorch, Git, GCP, Node.js
+
+PROFESSIONAL EXPERIENCE
+Experience: 3-5 years building highly scalable, modern applications.
+Key achievements include migrating legacy systems to microservices and setting up automated CI/CD pipelines.
+
+EDUCATION
+B.S. Computer Science, State University, 2018

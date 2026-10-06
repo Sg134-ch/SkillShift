@@ -245,3 +245,19 @@ class SkillDriftDetector:
                 edges.append({"from": u, "to": v, "value": data.get('weight', 1)})
                 
         return {"nodes": nodes, "edges": edges}
+
+    def calculate_drift_score(self, candidate_skills: List[str]) -> Tuple[float, List[str]]:
+        """
+        Calculates normalized drift adaptation score and returns missing OOD skills.
+        """
+        if not candidate_skills:
+            return 0.5, []
+            
+        clean_skills = [s.strip().lower() for s in candidate_skills if isinstance(s, str) and s.strip()]
+        ood = self.detect_drift([clean_skills])
+        in_vocab = [s for s in clean_skills if s in self.base_vocabulary]
+        
+        score = 0.45 + (len(in_vocab) * 0.05) + (len(ood) * 0.10)
+        norm_score = float(max(0.0, min(1.0, score)))
+        return round(norm_score, 2), ood
+

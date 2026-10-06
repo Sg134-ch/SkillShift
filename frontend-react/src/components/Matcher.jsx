@@ -22,8 +22,12 @@ import {
   DollarSign,
   Compass,
   Award,
-  Settings2
+  Settings2,
+  Code,
+  ShieldCheck,
+  Download
 } from 'lucide-react';
+import mermaid from 'mermaid';
 import { evaluateResumeMatch, generateLearningRoadmap, uploadResumeFile } from '../services/api';
 import { mockCandidatePresets, mockCompanyDemands } from '../data/mockData';
 import { useApp } from '../context/AppContext';
@@ -31,13 +35,23 @@ import { useApp } from '../context/AppContext';
 const Matcher = ({ isBackendLive }) => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
-  const { studentResume, setStudentResume, dimensionWeights, setDimensionWeights } = useApp();
+  const { studentResume, setStudentResume, recruiterCohort, setRecruiterCohort, dimensionWeights, setDimensionWeights } = useApp();
   
   const [activeTab, setActiveTab] = useState('diagnostic'); // 'diagnostic' | 'roadmap' | 'companies'
   const [dragActive, setDragActive] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showWeightSliders, setShowWeightSliders] = useState(false);
+
+
+  React.useEffect(() => {
+    mermaid.initialize({ startOnLoad: false, theme: 'base' });
+    if (activeTab === 'roadmap') {
+      setTimeout(() => {
+        mermaid.contentLoaded();
+      }, 100);
+    }
+  }, [activeTab, studentResume.result?.roadmap]);
 
   const {
     resumeText,
@@ -52,16 +66,22 @@ const Matcher = ({ isBackendLive }) => {
   };
 
   const handleSelectPreset = (preset) => {
+    // If the candidate exists in the recruiter cohort, use their verified status
+    const candidateRecruiterProfile = recruiterCohort?.candidates?.find(c => c.name === preset.name);
+    
     updateState({
       selectedPresetId: preset.id,
       uploadedFile: null,
+      name: preset.name,
       targetRole: preset.targetJobTitle,
       resumeText: preset.resumeText,
+      verifiedSkills: candidateRecruiterProfile ? (candidateRecruiterProfile.verifiedSkills || []) : [],
       result: {
         score_before_adaptation: preset.scores.stale,
         score_after_adaptation: preset.scores.adapted,
         missing_skills_flagged: preset.flaggedSkills,
         recognized_baseline: preset.recognizedBaseline,
+        true_missing: preset.trueMissing || [],
         explanation: preset.explanation,
         dimensions: preset.dimensions,
         isLive: false
@@ -178,7 +198,9 @@ const Matcher = ({ isBackendLive }) => {
       updateState({
         result: {
           ...response,
-          recognized_baseline: recognized.length > 0 ? recognized : ['Core Engineering Fundamentals'],
+          recognized_baseline: response.recognized_baseline?.length > 0 ? response.recognized_baseline : (recognized.length > 0 ? recognized : ['Core Engineering Fundamentals']),
+          true_missing: response.true_missing || [],
+          missing_skills_flagged: response.missing_skills_flagged || [],
           dimensions: customDimensions
         }
       });
@@ -194,7 +216,14 @@ const Matcher = ({ isBackendLive }) => {
   const scoreAfterPct = Math.round(result.score_after_adaptation * 100);
   const deltaPct = scoreAfterPct - scoreBeforePct;
 
-  const roadmap = generateLearningRoadmap(result.missing_skills_flagged || [], targetRole);
+  const rawRoadmap = result.roadmap || generateLearningRoadmap(result.true_missing?.length > 0 ? result.true_missing : (result.missing_skills_flagged || []), targetRole);
+  const finalRoadmap = {
+    trackTitle: rawRoadmap.targetRole ? `Personalized ${rawRoadmap.targetRole} Plan` : rawRoadmap.trackTitle,
+    overview: rawRoadmap.careerImpact || rawRoadmap.overview,
+    targetScoreImpact: rawRoadmap.estimatedTotalDuration || rawRoadmap.targetScoreImpact,
+    milestones: rawRoadmap.stages || rawRoadmap.milestones,
+    mermaidFlowchart: rawRoadmap.mermaidFlowchart
+  };
 
   const lowerResume = resumeText.toLowerCase();
   const matchedCompanies = mockCompanyDemands.map(comp => {
@@ -235,44 +264,38 @@ const Matcher = ({ isBackendLive }) => {
           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Click archetype to load instantly</span>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px' }}>
+        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px', flexWrap: 'wrap' }}>
           {mockCandidatePresets.map((preset) => {
             const isSelected = selectedPresetId === preset.id;
+            const deltaStr = preset.scores?.delta || (preset.scores?.adapted != null ? `${preset.scores.adapted >= preset.scores.stale ? '+' : ''}${Math.round((preset.scores.adapted - preset.scores.stale) * 100)}%` : '+0%');
             return (
-              <div
+              <button
                 key={preset.id}
                 onClick={() => handleSelectPreset(preset)}
                 className={`card card-interactive ${isSelected ? 'card-glass' : ''}`}
                 style={{
-                  padding: '16px',
-                  borderRadius: '12px',
+                  padding: '8px 12px',
+                  borderRadius: '8px',
                   borderColor: isSelected ? 'var(--accent-cyan)' : 'var(--border-subtle)',
                   background: isSelected ? 'var(--bg-surface-elevated)' : 'var(--bg-surface)',
-                  boxShadow: isSelected ? 'var(--glow-cyan)' : 'var(--card-shadow)',
+                  boxShadow: isSelected ? 'var(--glow-cyan)' : 'none',
                   display: 'flex',
-                  flexDirection: 'column',
-                  gap: '8px'
+                  alignItems: 'center',
+                  gap: '8px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  border: `1px solid ${isSelected ? 'var(--accent-cyan)' : 'var(--border-subtle)'}`
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span className={`badge badge-${preset.badgeType}`}>
-                    {preset.badge}
-                  </span>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                    {preset.targetJobTitle}
-                  </span>
-                </div>
-                <strong style={{ fontSize: '0.9375rem', color: isSelected ? 'var(--accent-cyan)' : 'var(--text-primary)' }}>
-                  {preset.title}
-                </strong>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8125rem', marginTop: 'auto', paddingTop: '6px' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>Delta:</span>
-                  <strong style={{ color: preset.scores.delta.startsWith('+') ? 'var(--accent-emerald)' : 'var(--accent-rose)' }}>
-                    {preset.scores.delta}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  <strong style={{ fontSize: '0.85rem', color: isSelected ? 'var(--accent-cyan)' : 'var(--text-primary)' }}>
+                    {preset.title || preset.name}
                   </strong>
-                  <ChevronRight size={14} style={{ marginLeft: 'auto', color: 'var(--text-muted)' }} />
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                    {preset.badge} • <strong style={{ color: deltaStr.startsWith('+') ? 'var(--accent-emerald)' : 'var(--accent-rose)' }}>{deltaStr}</strong>
+                  </span>
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>
@@ -354,6 +377,11 @@ const Matcher = ({ isBackendLive }) => {
               <option value="Machine Learning Engineer">Machine Learning Engineer</option>
               <option value="Data Scientist">Data Scientist</option>
               <option value="Software Engineer">Software Engineer</option>
+              <option value="Data Analyst">Data Analyst</option>
+              <option value="Frontend Developer">Frontend Developer</option>
+              <option value="Backend Developer">Backend Developer</option>
+              <option value="DevOps Engineer">DevOps Engineer</option>
+              <option value="Product Manager">Product Manager</option>
             </select>
           </div>
 
@@ -408,6 +436,8 @@ const Matcher = ({ isBackendLive }) => {
               </div>
             )}
           </div>
+
+
 
           {/* Text Area Workspace */}
           <div>
@@ -477,7 +507,7 @@ const Matcher = ({ isBackendLive }) => {
               className={`portal-tab ${activeTab === 'roadmap' ? 'active student' : ''}`}
             >
               <BookOpen size={14} />
-              <span>AI Learning Roadmap ({roadmap?.milestones?.length || 4} Steps)</span>
+              <span>AI Learning Roadmap ({finalRoadmap?.milestones?.length || 4} Steps)</span>
             </button>
             <button
               onClick={() => setActiveTab('companies')}
@@ -575,52 +605,78 @@ const Matcher = ({ isBackendLive }) => {
               </div>
 
               {/* Skill Classification Matrix */}
-              <div className="card">
-                <h4 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Layers size={18} color="var(--accent-cyan)" />
-                  <span>Extracted Skill Classification Matrix</span>
-                </h4>
+              <div className="card" style={{ padding: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+                  <h4 style={{ fontSize: '1.05rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                    <Layers size={18} color="var(--accent-cyan)" />
+                    <span>Skill Gap Diagnostic Matrix</span>
+                  </h4>
+                </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '18px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
                   
-                  {/* Flagged Out-of-Distribution */}
-                  <div style={{ padding: '16px', background: 'var(--bg-surface-elevated)', borderRadius: '12px', border: '1px solid rgba(251, 191, 36, 0.2)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                      <AlertTriangle size={16} color="var(--accent-amber)" />
-                      <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--accent-amber)' }}>
-                        Flagged Out-of-Distribution ({result.missing_skills_flagged?.length || 0})
+                  {/* Recognized Baseline (What they have - Good) */}
+                  <div style={{ padding: '16px', background: 'var(--bg-canvas)', borderRadius: '10px', borderTop: '3px solid var(--accent-emerald)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <CheckCircle2 size={16} color="var(--accent-emerald)" />
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                        Recognized Core ({result.recognized_baseline?.length || 0})
                       </span>
                     </div>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>Baseline competencies aligned with target role.</p>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                      {result.missing_skills_flagged && result.missing_skills_flagged.length > 0 ? (
-                        result.missing_skills_flagged.map((skill, idx) => (
-                          <span key={idx} className="badge badge-amber" style={{ fontSize: '0.75rem' }}>
+                      {result.recognized_baseline && result.recognized_baseline.length > 0 ? (
+                        result.recognized_baseline.map((skill, idx) => (
+                          <span key={idx} className="badge" style={{ fontSize: '0.75rem', background: 'rgba(52, 211, 153, 0.1)', color: 'var(--accent-emerald)', border: '1px solid rgba(52, 211, 153, 0.2)' }}>
                             {skill}
                           </span>
                         ))
                       ) : (
-                        <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>None (Standard baseline vocabulary)</span>
+                        <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>None recognized</span>
                       )}
                     </div>
                   </div>
 
-                  {/* Recognized Baseline */}
-                  <div style={{ padding: '16px', background: 'var(--bg-surface-elevated)', borderRadius: '12px', border: '1px solid rgba(52, 211, 153, 0.2)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                      <CheckCircle2 size={16} color="var(--accent-emerald)" />
-                      <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--accent-emerald)' }}>
-                        Recognized Baseline Core ({result.recognized_baseline?.length || 0})
+                  {/* Flagged Outdated (What they have - Bad/Legacy) */}
+                  <div style={{ padding: '16px', background: 'var(--bg-canvas)', borderRadius: '10px', borderTop: '3px solid var(--accent-amber)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <AlertTriangle size={16} color="var(--accent-amber)" />
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                        Flagged / Outdated ({result.missing_skills_flagged?.length || 0})
                       </span>
                     </div>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>Skills penalized as legacy or out-of-distribution.</p>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                      {result.recognized_baseline && result.recognized_baseline.length > 0 ? (
-                        result.recognized_baseline.map((skill, idx) => (
-                          <span key={idx} className="badge badge-emerald" style={{ fontSize: '0.75rem' }}>
+                      {result.missing_skills_flagged && result.missing_skills_flagged.length > 0 ? (
+                        result.missing_skills_flagged.map((skill, idx) => (
+                          <span key={idx} className="badge" style={{ fontSize: '0.75rem', background: 'rgba(251, 191, 36, 0.1)', color: 'var(--accent-amber)', border: '1px solid rgba(251, 191, 36, 0.2)' }}>
                             {skill}
                           </span>
                         ))
                       ) : (
-                        <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>No explicit core baseline tokens</span>
+                        <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>None</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Missing Modern Skills (What they need) */}
+                  <div style={{ padding: '16px', background: 'var(--bg-canvas)', borderRadius: '10px', borderTop: '3px solid var(--accent-rose)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Zap size={16} color="var(--accent-rose)" />
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                        Missing Modern Skills ({result.true_missing?.length || 0})
+                      </span>
+                    </div>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>Critical gaps required for 2024 hiring standards.</p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {result.true_missing && result.true_missing.length > 0 ? (
+                        result.true_missing.map((skill, idx) => (
+                          <span key={idx} className="badge" style={{ fontSize: '0.75rem', background: 'rgba(244, 63, 94, 0.1)', color: 'var(--accent-rose)', border: '1px solid rgba(244, 63, 94, 0.2)' }}>
+                            {skill}
+                          </span>
+                        ))
+                      ) : (
+                        <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>None identified</span>
                       )}
                     </div>
                   </div>
@@ -642,35 +698,68 @@ const Matcher = ({ isBackendLive }) => {
             </div>
           )}
 
-          {/* Tab 2: AI Skill Gap & Learning Roadmap */}
           {activeTab === 'roadmap' && (
-            <div className="card" style={{ padding: '24px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '14px', marginBottom: '16px' }}>
+            <div className="card" style={{ padding: '24px' }} id="roadmap-print-area">
+              
+              {/* Print Only Header */}
+              <div className="print-only">
+                <h1 style={{ fontSize: '1.5rem', marginBottom: '8px' }}>Personalized Learning Roadmap</h1>
+                <div style={{ marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div><strong>Candidate Name:</strong> {studentResume.name || 'Anonymous Candidate'}</div>
+                  <div><strong>Target Role:</strong> {targetRole}</div>
+                  <div>
+                    <strong>Core Baseline Skills:</strong> {result?.recognized_baseline && result.recognized_baseline.length > 0 ? result.recognized_baseline.join(', ') : 'Not available'}
+                  </div>
+                  <div>
+                    <strong>Flagged / Outdated Skills:</strong> {result?.missing_skills_flagged && result.missing_skills_flagged.length > 0 ? result.missing_skills_flagged.join(', ') : 'None'}
+                  </div>
+                  <div>
+                    <strong>Missing Modern Skills:</strong> {result?.true_missing && result.true_missing.length > 0 ? result.true_missing.join(', ') : 'None identified'}
+                  </div>
+                </div>
+                <hr style={{ borderColor: 'var(--border-subtle)', marginBottom: '16px' }} />
+              </div>
+
+              <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '14px', marginBottom: '16px' }}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <BookOpen size={20} color="var(--accent-cyan)" />
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>{roadmap.trackTitle}</h3>
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>{finalRoadmap.trackTitle}</h3>
                   </div>
                   <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '4px' }}>
-                    {roadmap.overview}
+                    {finalRoadmap.overview}
                   </p>
                 </div>
-                <span className="badge badge-emerald" style={{ fontSize: '0.8125rem', padding: '6px 12px' }}>
-                  {roadmap.targetScoreImpact}
-                </span>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <span className="badge badge-emerald" style={{ fontSize: '0.8125rem', padding: '6px 12px' }}>
+                    {finalRoadmap.targetScoreImpact}
+                  </span>
+                  <button onClick={() => window.print()} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8125rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Download size={14} /> Download PDF
+                  </button>
+                </div>
               </div>
 
+              {finalRoadmap.mermaidFlowchart && (
+                <div style={{ padding: '16px', background: 'var(--bg-canvas)', borderRadius: '12px', marginBottom: '24px', overflowX: 'auto' }}>
+                  <h4 style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '12px' }}>Your Learning Journey:</h4>
+                  <div className="mermaid">
+                    {finalRoadmap.mermaidFlowchart}
+                  </div>
+                </div>
+              )}
+
               <div className="roadmap-timeline">
-                {roadmap.milestones.map((ms, idx) => (
+                {finalRoadmap.milestones.map((ms, idx) => (
                   <div key={idx} className="roadmap-step">
                     <div className="roadmap-node">{idx + 1}</div>
                     <div className="roadmap-content">
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
                         <strong style={{ fontSize: '0.9375rem', color: 'var(--text-primary)' }}>
-                          {ms.week}: {ms.title}
+                          {ms.week || ms.timeframe}: {ms.title}
                         </strong>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                          {ms.skills.map((s, sIdx) => (
+                          {(ms.skills || []).map((s, sIdx) => (
                             <span key={sIdx} className="badge badge-cyan" style={{ fontSize: '0.6875rem' }}>
                               {s}
                             </span>
@@ -678,14 +767,17 @@ const Matcher = ({ isBackendLive }) => {
                         </div>
                       </div>
                       <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: 0 }}>
-                        {ms.description}
+                        {ms.description || ms.focus}
                       </p>
-                      <div style={{ background: 'var(--bg-canvas)', padding: '8px 12px', borderRadius: '8px', fontSize: '0.75rem', border: '1px solid var(--border-subtle)' }}>
-                        <span style={{ color: 'var(--accent-indigo)', fontWeight: 700 }}>Recommended Project: </span>
-                        <span style={{ color: 'var(--text-primary)' }}>{ms.project}</span>
-                      </div>
-                      <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
-                        <strong>Resource:</strong> {ms.resource}
+                      <div style={{ background: 'var(--bg-canvas)', padding: '10px 14px', borderRadius: '6px', fontSize: '0.75rem', border: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <div style={{ color: 'var(--text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '0.65rem' }}>Recommended Course</div>
+                        {ms.verifiedResources && ms.verifiedResources.length > 0 ? (
+                          <a href={ms.verifiedResources[0].url} target="_blank" rel="noreferrer" style={{ color: 'var(--accent-cyan)', textDecoration: 'none', fontWeight: 600 }}>
+                            {ms.verifiedResources[0].name}
+                          </a>
+                        ) : (
+                          <span style={{ color: 'var(--text-primary)' }}>{ms.resource || 'Professional Certification Course'}</span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -776,6 +868,8 @@ const Matcher = ({ isBackendLive }) => {
         </div>
 
       </div>
+
+
 
     </div>
   );

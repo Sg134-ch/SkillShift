@@ -24,7 +24,8 @@ import {
   Trash2,
   X,
   History,
-  Clock
+  Clock,
+  ShieldCheck
 } from 'lucide-react';
 import { runBatchScreening, uploadBatchResumes, fetchScreeningHistory } from '../services/api';
 import { mockBatchCandidates } from '../data/mockData';
@@ -46,6 +47,8 @@ const BatchScreening = ({ isBackendLive }) => {
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState('all');
   const [expandedId, setExpandedId] = useState(null);
+
+  const [sortConfig, setSortConfig] = useState({ key: 'adaptedRank', direction: 'asc' });
 
   const { targetRole, candidates, uploadedFiles, metrics } = recruiterCohort;
 
@@ -250,13 +253,49 @@ const BatchScreening = ({ isBackendLive }) => {
     setShowHistoryDrawer(false);
   };
 
-  const filteredCandidates = candidates.filter(c => {
-    if (statusFilter === 'all') return true;
-    if (statusFilter === 'fn') return c.verdict?.includes('False Negative');
-    if (statusFilter === 'baseline') return c.verdict?.includes('Consistent');
-    if (statusFilter === 'legacy') return c.verdict?.includes('Reverse') || c.verdict?.includes('Low');
-    return true;
-  });
+  const getSortedCandidates = () => {
+    let result = candidates.filter(c => {
+      if (statusFilter === 'all') return true;
+      if (statusFilter === 'fn') return c.verdict?.includes('False Negative') || c.verdict?.includes('Restored');
+      if (statusFilter === 'eligible') return c.verdict?.includes('Consistent') || c.verdict?.includes('False Negative') || c.verdict?.includes('Strong') || c.verdict?.includes('Restored') || c.verdict?.includes('Standard Match');
+      if (statusFilter === 'rejected') return c.verdict?.includes('Legacy') || c.verdict?.includes('Low') || c.verdict?.includes('Reverse');
+      if (statusFilter === 'verified') return c.isVerified;
+      return true;
+    });
+
+    result.sort((a, b) => {
+      let valA, valB;
+      switch (sortConfig.key) {
+        case 'name':
+          valA = a.name.toLowerCase();
+          valB = b.name.toLowerCase();
+          break;
+        case 'title':
+          valA = (a.title || '').toLowerCase();
+          valB = (b.title || '').toLowerCase();
+          break;
+        case 'adaptedRank':
+          valA = a.adaptedRank || 999;
+          valB = b.adaptedRank || 999;
+          break;
+        case 'legacyAtsScore':
+          valA = a.legacyAtsScore || 0;
+          valB = b.legacyAtsScore || 0;
+          break;
+        default:
+          valA = a.adaptedRank || 999;
+          valB = b.adaptedRank || 999;
+      }
+      
+      if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+    
+    return result;
+  };
+
+  const filteredCandidates = getSortedCandidates();
 
   const getRankBadgeClass = (rank) => {
     if (rank === 1) return 'rank-badge rank-gold';
@@ -542,35 +581,58 @@ const BatchScreening = ({ isBackendLive }) => {
           </button>
         </div>
 
-        {/* Filter Tabs */}
-        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-          {[
-            { id: 'all', label: 'All Candidates' },
-            { id: 'fn', label: 'False Negatives Rescued 🌟' },
-            { id: 'baseline', label: 'Consistent Baseline Core' },
-            { id: 'legacy', label: 'Legacy / Low Overlap' }
-          ].map((f) => {
-            const isSelected = statusFilter === f.id;
-            return (
-              <button
-                key={f.id}
-                onClick={() => setStatusFilter(f.id)}
-                style={{
-                  padding: '6px 14px',
-                  borderRadius: '8px',
-                  fontSize: '0.8125rem',
-                  fontWeight: isSelected ? 700 : 500,
-                  cursor: 'pointer',
-                  border: isSelected ? '1px solid var(--accent-cyan)' : '1px solid var(--border-subtle)',
-                  background: isSelected ? 'var(--bg-surface-elevated)' : 'transparent',
-                  color: isSelected ? 'var(--accent-cyan)' : 'var(--text-secondary)',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                {f.label}
-              </button>
-            );
-          })}
+        {/* Filter & Sort Controls */}
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '6px' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', marginRight: '4px' }}>SORT BY:</span>
+            <select 
+              value={`${sortConfig.key}-${sortConfig.direction}`}
+              onChange={(e) => {
+                const [key, direction] = e.target.value.split('-');
+                setSortConfig({ key, direction });
+              }}
+              style={{ padding: '4px 8px', fontSize: '0.8125rem', borderRadius: '6px' }}
+            >
+              <option value="adaptedRank-asc">Rank (Best First)</option>
+              <option value="name-asc">Name (A-Z)</option>
+              <option value="name-desc">Name (Z-A)</option>
+              <option value="title-asc">Job Role (A-Z)</option>
+              <option value="legacyAtsScore-desc">ATS Score (Highest)</option>
+            </select>
+          </div>
+
+          <div style={{ width: '1px', height: '24px', background: 'var(--border-subtle)', margin: '0 4px' }}></div>
+
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+            {[
+              { id: 'all', label: 'All Candidates' },
+              { id: 'eligible', label: 'Eligible (High Match)' },
+              { id: 'rejected', label: 'Rejected (Low Fit)' },
+              { id: 'fn', label: 'False Negatives Rescued 🌟' },
+              { id: 'verified', label: 'Verified Credentials Only 🛡️' }
+            ].map((f) => {
+              const isSelected = statusFilter === f.id;
+              return (
+                <button
+                  key={f.id}
+                  onClick={() => setStatusFilter(f.id)}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '8px',
+                    fontSize: '0.8125rem',
+                    fontWeight: isSelected ? 700 : 500,
+                    cursor: 'pointer',
+                    border: isSelected ? '1px solid var(--accent-cyan)' : '1px solid var(--border-subtle)',
+                    background: isSelected ? 'var(--bg-surface-elevated)' : 'transparent',
+                    color: isSelected ? 'var(--accent-cyan)' : 'var(--text-secondary)',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  {f.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
       </div>
@@ -589,6 +651,7 @@ const BatchScreening = ({ isBackendLive }) => {
               <tr>
                 <th style={{ width: '80px', textAlign: 'center' }}>Adapted Rank</th>
                 <th>Candidate & Skill Profile</th>
+                <th style={{ width: '120px', textAlign: 'center' }}>Trust Points</th>
                 <th style={{ width: '150px' }}>Legacy ATS Score</th>
                 <th style={{ width: '160px' }}>Adapted Score (2024)</th>
                 <th style={{ width: '120px', textAlign: 'center' }}>Rank Shift</th>
@@ -622,8 +685,24 @@ const BatchScreening = ({ isBackendLive }) => {
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <strong style={{ fontSize: '0.9375rem', color: 'var(--text-primary)' }}>{cand.name}</strong>
                             {cand.experience && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>({cand.experience})</span>}
+                            {cand.isVerified && (
+                              <div title="Verified Credentials" style={{ display: 'flex', alignItems: 'center', color: 'var(--accent-emerald)' }}>
+                                <ShieldCheck size={16} />
+                              </div>
+                            )}
                           </div>
                           <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>{cand.title}</span>
+                          
+                          {/* Verified Skills Chips */}
+                          {cand.verifiedSkills && cand.verifiedSkills.length > 0 && (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '2px' }}>
+                              {cand.verifiedSkills.map((sk, idx) => (
+                                <span key={idx} className="badge badge-emerald" style={{ fontSize: '0.625rem', padding: '1px 4px' }}>
+                                  {sk} ✓
+                                </span>
+                              ))}
+                            </div>
+                          )}
                           
                           {/* Flagged Skills Chips */}
                           {cand.flaggedSkills && cand.flaggedSkills.length > 0 && (
@@ -636,6 +715,18 @@ const BatchScreening = ({ isBackendLive }) => {
                             </div>
                           )}
                         </div>
+                      </td>
+
+                      {/* Trust Points */}
+                      <td style={{ textAlign: 'center' }}>
+                        {cand.trustPoints !== undefined ? (
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--accent-emerald)', padding: '4px 10px', borderRadius: '12px', fontWeight: 800, fontSize: '0.875rem' }}>
+                            <ShieldCheck size={16} />
+                            {cand.trustPoints}
+                          </div>
+                        ) : (
+                          <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Unverified</span>
+                        )}
                       </td>
 
                       {/* Legacy ATS Score */}

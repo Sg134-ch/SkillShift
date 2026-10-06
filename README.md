@@ -100,7 +100,7 @@ flowchart TD
 ## 📁 Project Directory Structure
 
 ```text
-AML/
+SkillShift-main/
 ├── backend/
 │   ├── __init__.py
 │   ├── database.py                 # SQLite database schema, connections, and audit log CRUD
@@ -152,7 +152,7 @@ AML/
 
 1. **Open your terminal** and navigate to the project directory:
    ```bash
-   cd AML
+   cd SkillShift-main
    ```
 
 2. **Create and activate a virtual environment**:
@@ -184,7 +184,7 @@ AML/
 
 1. **Open a new terminal window** and navigate to `frontend-react`:
    ```bash
-   cd AML/frontend-react
+   cd SkillShift-main/frontend-react
    ```
 
 2. **Install frontend dependencies**:
@@ -304,7 +304,7 @@ Follow these step-by-step instructions to initialize and push this project as a 
 
 2. **Initialize Git and commit all files**:
    ```bash
-   cd AML
+   cd SkillShift-main
    git init
    git add .
    git commit -m "feat: initial commit of SkillShift platform with concept drift engine"
@@ -328,7 +328,7 @@ Follow these step-by-step instructions to initialize and push this project as a 
 
 2. **Push your local code to GitHub**:
    ```bash
-   cd AML
+   cd SkillShift-main
    git init
    git add .
    git commit -m "feat: initial commit of SkillShift platform"

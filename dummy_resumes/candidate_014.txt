@@ -1,0 +1,17 @@
+Sam Jones
+Machine Learning Engineer | Candidate ID: #1014
+
+Contact: sam.jones@example.com
+
+SUMMARY
+Passionate Machine Learning Engineer with a focus on delivering high-quality software and systems. Proven track record in solving complex technical problems.
+
+TECHNICAL SKILLS
+React, Java, SQL, C++, Tailwind CSS, PyTorch, AWS, Git, Next.js, Supabase, Kubernetes
+
+PROFESSIONAL EXPERIENCE
+Experience: 3-5 years building highly scalable, modern applications.
+Key achievements include migrating legacy systems to microservices and setting up automated CI/CD pipelines.
+
+EDUCATION
+B.S. Computer Science, State University, 2018

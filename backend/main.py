@@ -12,13 +12,17 @@ if BASE_DIR not in sys.path:
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel
 from ml_pipeline.drift_detector import SkillDriftDetector, extract_skills_from_text, SKILL_TAXONOMY
-from ml_pipeline.data_processor import process_historical_data, process_modern_data, generate_mock_resumes
 from backend.database import (
     save_screening_run, 
     get_screening_history, 
     save_jd_audit, 
-    get_jd_audit_history
+    get_jd_audit_history,
+    get_companies_from_db,
+    get_job_profile_from_db,
+    get_drift_timeline
 )
+from backend.ingestion_service import run_ingestion_cycle
+from backend.llm_client import get_jd_audit_llm, forecast_skill_drift_llm, generate_learning_roadmap_llm
 import numpy as np
 
 try:
@@ -51,19 +55,11 @@ app.add_middleware(
 detector = SkillDriftDetector()
 historical_skills = []
 modern_skills = []
-drift_timeline = [
-    {"month": "2023-01", "vocab_size": 2450, "new_skills_detected": 14},
-    {"month": "2023-03", "vocab_size": 2518, "new_skills_detected": 46},
-    {"month": "2023-06", "vocab_size": 2621, "new_skills_detected": 31},
-    {"month": "2023-09", "vocab_size": 2728, "new_skills_detected": 42},
-    {"month": "2023-12", "vocab_size": 2806, "new_skills_detected": 18},
-    {"month": "2024-03", "vocab_size": 2894, "new_skills_detected": 35},
-    {"month": "2024-05", "vocab_size": 2975, "new_skills_detected": 33},
-]
+# Removed mock drift_timeline
 
 @app.on_event("startup")
 async def startup_event():
-    global detector, historical_skills, modern_skills, drift_timeline
+    global detector, historical_skills, modern_skills
     print("Initializing Data and Models...")
     
     try:
@@ -78,21 +74,8 @@ async def startup_event():
     except Exception as e:
         print(f"Startup initialization notice: {e}. Using precomputed baseline data.")
 
-# Benchmark Job Profiles with rich semantic descriptors
-JOB_PROFILES = {
-    "Software Engineer": {
-        "stale": "software engineer java 8 c++ javascript jquery react html css svn subversion soap web services front-end back-end bare-metal",
-        "adapted": "software engineer react 19 nextjs 14 typescript tailwind css nodejs python fastapi docker kubernetes aws microservices graphql rest serverless"
-    },
-    "Data Scientist": {
-        "stale": "data scientist sas spss excel vba r statistics sql pandas scikit-learn machine learning tableau predictive modeling monolithic scripts",
-        "adapted": "data scientist python sql pandas scikit-learn machine learning pytorch transformers deep learning big data snowflake dbt mlflow experiment tracking"
-    },
-    "Machine Learning Engineer": {
-        "stale": "machine learning engineer hadoop mapreduce java 8 weka scikit-learn python perl classical ml data pipelines svn ant",
-        "adapted": "machine learning engineer python deep learning pytorch langchain prompt engineering llms rag architecture vector databases lora fine-tuning fastapi docker aws kubernetes vllm"
-    }
-}
+# Job profiles are now loaded dynamically from the SQLite database.
+# See backend.database for initial seeding.
 
 class ResumeRequest(BaseModel):
     resume_text: str
@@ -103,6 +86,7 @@ class MatchResponse(BaseModel):
     score_after_adaptation: float
     missing_skills_flagged: List[str]
     explanation: str
+    roadmap: Optional[Dict[str, Any]] = None
 
 @app.get("/")
 async def read_root():
@@ -180,10 +164,15 @@ async def upload_batch_resumes(files: List[UploadFile] = File(...)):
     return {"candidates": parsed_candidates, "count": len(parsed_candidates)}
 
 # Single Resume Match Evaluation
-@app.post("/api/match", response_model=MatchResponse)
+@app.post("/api/match")
 def match_resume(request: ResumeRequest):
     text_lower = request.resume_text.lower()
-    profile = JOB_PROFILES.get(request.target_job_title, JOB_PROFILES["Machine Learning Engineer"])
+    
+    profile = get_job_profile_from_db(request.target_job_title)
+    if not profile:
+        profile = get_job_profile_from_db("Machine Learning Engineer")
+        if not profile:
+            profile = {"stale": "", "adapted": ""}
     
     stale_job_emb = detector.encoder.encode(profile["stale"])
     adapted_job_emb = detector.encoder.encode(profile["adapted"])
@@ -212,109 +201,61 @@ def match_resume(request: ResumeRequest):
     else:
         explanation = f"The resume demonstrates moderate semantic overlap across both historical and modern criteria for {request.target_job_title}."
         
+    # Generate true missing skills for the roadmap
+    modern_skills_in_profile = {s['name'] for s in extract_skills_from_text(profile.get("adapted", ""))}
+    candidate_skills = {s['name'] for s in extracted}
+    true_missing = list(modern_skills_in_profile - candidate_skills)
+    
+    roadmap = None
+    if true_missing:
+        # Only take top 5 missing skills to keep the prompt focused
+        roadmap = generate_learning_roadmap_llm(true_missing[:5], request.target_job_title)
+        
     return MatchResponse(
         score_before_adaptation=stale_score,
         score_after_adaptation=adapted_score,
         missing_skills_flagged=flagged_ood,
-        explanation=explanation
+        explanation=explanation,
+        roadmap=roadmap
     )
 
 @app.get("/api/drift-metrics")
-async def get_drift_metrics():
-    return {"timeline": drift_timeline}
+async def get_drift_metrics(target_job_title: str = "Machine Learning Engineer"):
+    # Read true timeline from DB instead of memory
+    timeline = get_drift_timeline()
+    
+    # Append the LLM-predicted future drift to the historical timeline
+    forecast = forecast_skill_drift_llm(["vllm", "lora", "langchain"], target_job_title)
+    
+    if forecast and timeline:
+        # Convert forecasted years into timeline format for the UI
+        for item in forecast:
+            timeline.append({
+                "month": f"{item.get('year')}-01", 
+                "vocab_size": timeline[-1]["vocab_size"] + item.get("predicted_adoption_pct", 10) * 10,
+                "new_skills_detected": len(item.get("emerging_tech", [])),
+                "is_forecast": True,
+                "emerging": item.get("emerging_tech", [])
+            })
+            
+    return {"timeline": timeline}
+
+@app.post("/api/trigger-ingestion")
+async def trigger_ingestion():
+    # Force a live data ingestion cycle
+    result = run_ingestion_cycle()
+    return result
 
 @app.get("/api/skill-graph")
 async def get_skill_graph():
     return detector.get_graph_data(top_n_nodes=35)
 
-# Company Demand Data
-COMPANY_DEMANDS_DB = [
-    {
-        "id": "databricks", "name": "Databricks", "industry": "Data & AI Lakehouse", "tier": "AI Unicorn / Enterprise",
-        "logoColor": "#ff3621", "roleTitle": "GenAI Applications Engineer", "department": "AI Solutions & MosaicML",
-        "salaryBand": "$165,000 - $215,000", "location": "San Francisco, CA (Hybrid / Remote)",
-        "hiringUrgency": "Surging Demand 🔥", "growthPct": "+240%",
-        "requiredSkills": ["Python", "LangChain", "RAG Architecture", "FastAPI", "Vector Databases", "PyTorch"],
-        "emergingSkills": ["Vector Databases", "LangChain", "RAG Architecture", "LoRA Fine-Tuning"],
-        "description": "Building next-generation generative AI workflows and custom LLM inference pipelines on MosaicML and Lakehouse architecture."
-    },
-    {
-        "id": "openai", "name": "OpenAI", "industry": "Frontier AI Research", "tier": "Frontier Lab",
-        "logoColor": "#10a37f", "roleTitle": "AI Platform Systems Engineer", "department": "Applied Engineering",
-        "salaryBand": "$200,000 - $285,000", "location": "San Francisco, CA (Hybrid)",
-        "hiringUrgency": "Surging Demand 🔥", "growthPct": "+310%",
-        "requiredSkills": ["Python", "PyTorch", "Docker", "Kubernetes", "FastAPI", "Distributed Systems"],
-        "emergingSkills": ["vLLM", "Triton Inference", "Prompt Engineering", "LoRA / Fine-Tuning"],
-        "description": "Scale high-throughput API endpoints and orchestrate distributed model evaluation infrastructure for millions of developers."
-    },
-    {
-        "id": "anthropic", "name": "Anthropic", "industry": "AI Safety & Large Models", "tier": "Frontier Lab",
-        "logoColor": "#d97706", "roleTitle": "Prompt Systems & Evaluation Engineer", "department": "Model Alignment & Product",
-        "salaryBand": "$180,000 - $240,000", "location": "San Francisco, CA (Hybrid / Remote)",
-        "hiringUrgency": "Surging Demand 🔥", "growthPct": "+280%",
-        "requiredSkills": ["Python", "Prompt Engineering", "Statistics", "Scikit-Learn", "FastAPI", "TypeScript"],
-        "emergingSkills": ["Prompt Engineering", "RAG Architecture", "LlamaIndex"],
-        "description": "Develop automated benchmarking pipelines and evaluate safety steering across frontier Claude model architectures."
-    },
-    {
-        "id": "scale-ai", "name": "Scale AI", "industry": "Data Engine for Enterprise AI", "tier": "AI Unicorn",
-        "logoColor": "#ec4899", "roleTitle": "LLM Fine-Tuning Specialist", "department": "Generative AI Platform",
-        "salaryBand": "$160,000 - $210,000", "location": "New York, NY / Remote",
-        "hiringUrgency": "High Growth ⚡", "growthPct": "+190%",
-        "requiredSkills": ["Python", "PyTorch", "LoRA / PEFT", "Hugging Face", "SQL", "Docker"],
-        "emergingSkills": ["LoRA / Fine-Tuning", "Vector Databases", "Llama 3 Adaptation"],
-        "description": "Create customized model adaptation runs and RLHF alignment datasets for Fortune 500 enterprise clients."
-    },
-    {
-        "id": "snowflake", "name": "Snowflake", "industry": "Data Cloud & Cortex AI", "tier": "Public Enterprise",
-        "logoColor": "#29b5e8", "roleTitle": "MLOps & Cortex AI Developer", "department": "Data Cloud Platforms",
-        "salaryBand": "$155,000 - $205,000", "location": "San Mateo, CA / Remote",
-        "hiringUrgency": "High Growth ⚡", "growthPct": "+145%",
-        "requiredSkills": ["Python", "SQL", "AWS", "Docker", "FastAPI", "Snowpark ML"],
-        "emergingSkills": ["Vector Search", "LangChain", "Cortex LLMs"],
-        "description": "Enable serverless LLM query features and semantic search capabilities across petabyte-scale data warehouses."
-    },
-    {
-        "id": "stripe", "name": "Stripe", "industry": "Financial Infrastructure", "tier": "FinTech Giant",
-        "logoColor": "#635bff", "roleTitle": "Machine Learning Infrastructure Engineer", "department": "Radar Fraud & Risk ML",
-        "salaryBand": "$175,000 - $230,000", "location": "Seattle, WA / San Francisco, CA / Remote",
-        "hiringUrgency": "Active Hiring ✅", "growthPct": "+65%",
-        "requiredSkills": ["Python", "SQL", "Docker", "Kubernetes", "AWS", "Scikit-Learn", "PyTorch"],
-        "emergingSkills": ["FastAPI", "Vector Databases", "Streaming Inference"],
-        "description": "Architect low-latency ML scoring systems processing hundreds of millions of transaction requests daily."
-    },
-    {
-        "id": "mistral-ai", "name": "Mistral AI", "industry": "Open-Weight Frontier Models", "tier": "Frontier AI Unicorn",
-        "logoColor": "#f97316", "roleTitle": "Open Source Model Optimization Engineer", "department": "Core Inference Team",
-        "salaryBand": "$170,000 - $230,000", "location": "Paris, France / Remote EU & US",
-        "hiringUrgency": "Surging Demand 🔥", "growthPct": "+350%",
-        "requiredSkills": ["Python", "C++", "PyTorch", "CUDA", "Docker", "Hugging Face"],
-        "emergingSkills": ["vLLM", "Quantization (AWQ/GGUF)", "LoRA Fine-Tuning"],
-        "description": "Optimize ultra-efficient inference runtimes for open-weight models (Mistral, Mixtral) on edge and cloud clusters."
-    },
-    {
-        "id": "microsoft", "name": "Microsoft", "industry": "Cloud & AI Copilot", "tier": "Big Tech",
-        "logoColor": "#00a4ef", "roleTitle": "Azure AI & Semantic Kernel Engineer", "department": "Azure AI Platform",
-        "salaryBand": "$160,000 - $220,000", "location": "Redmond, WA / Remote",
-        "hiringUrgency": "High Growth ⚡", "growthPct": "+110%",
-        "requiredSkills": ["Python", "C#", "Azure", "Docker", "FastAPI", "SQL"],
-        "emergingSkills": ["Semantic Kernel", "Vector Databases", "RAG Architecture", "Prompt Engineering"],
-        "description": "Build enterprise-grade Copilot orchestration backends and vector indexing pipelines on Azure OpenAI Service."
-    }
-]
+# Company Demands Data is now loaded dynamically from the SQLite database.
+# See backend.database for initial seeding.
 
 @app.get("/api/companies")
 async def get_companies(skill: str = None, domain: str = None):
-    results = COMPANY_DEMANDS_DB
-    if skill:
-        skill_lower = skill.lower().strip()
-        results = [
-            c for c in results 
-            if any(skill_lower in s.lower() for s in c["requiredSkills"] + c["emergingSkills"])
-            or skill_lower in c["roleTitle"].lower()
-        ]
-    if domain and domain != "all":
-        results = [c for c in results if domain.lower() in c["industry"].lower() or domain.lower() in c["roleTitle"].lower()]
+    results = get_companies_from_db(skill, domain)
     return {"companies": results, "total": len(results)}
 
 # Recruiter Batch Screening & Persistent DB Logging
@@ -328,9 +269,57 @@ class BatchScreenRequest(BaseModel):
     target_job_title: str
     candidates: List[BatchCandidate]
 
+class GithubVerifyRequest(BaseModel):
+    github_url: str
+    claimed_skills: List[str]
+
+@app.post("/api/verify-github")
+def verify_github_skills(req: GithubVerifyRequest):
+    import requests
+    # Extract username
+    url = req.github_url.rstrip('/')
+    username = url.split('/')[-1]
+    
+    try:
+        response = requests.get(f"https://api.github.com/users/{username}/repos?sort=updated&per_page=15", timeout=10)
+        if response.status_code != 200:
+            return {"verified_skills": [], "languages": []}
+            
+        repos = response.json()
+        languages_found = set()
+        for repo in repos:
+            if not repo.get('fork') and repo.get('language'):
+                languages_found.add(repo.get('language').lower())
+        
+        # Mapping to match claimed skills against found languages
+        verified = []
+        for skill in req.claimed_skills:
+            lower_skill = skill.lower().strip()
+            if not lower_skill:
+                continue
+                
+            if lower_skill in languages_found:
+                verified.append(skill)
+            elif lower_skill in ["machine learning", "deep learning", "pytorch", "tensorflow", "keras", "pandas", "numpy", "scikit-learn"] and ("python" in languages_found or "r" in languages_found or "jupyter notebook" in languages_found):
+                verified.append(skill)
+            elif lower_skill in ["jupyter notebook", "data science", "statistics", "data analysis"] and ("r" in languages_found or "python" in languages_found or "jupyter notebook" in languages_found):
+                verified.append(skill)
+            elif lower_skill in ["react", "react.js", "next.js", "vue", "angular", "node.js", "express"] and ("javascript" in languages_found or "typescript" in languages_found):
+                verified.append(skill)
+            elif lower_skill in ["react native", "expo"] and ("javascript" in languages_found or "typescript" in languages_found):
+                verified.append(skill)
+                
+        return {"verified_skills": list(set(verified)), "repos_scanned": len(repos), "languages": list(languages_found)}
+    except Exception as e:
+        return {"verified_skills": [], "error": str(e)}
+
 @app.post("/api/batch-screen")
 def batch_screen_candidates(request: BatchScreenRequest):
-    profile = JOB_PROFILES.get(request.target_job_title, JOB_PROFILES["Machine Learning Engineer"])
+    profile = get_job_profile_from_db(request.target_job_title)
+    if not profile:
+        profile = get_job_profile_from_db("Machine Learning Engineer")
+        if not profile:
+            profile = {"stale": "", "adapted": ""}
     stale_job_emb = detector.encoder.encode(profile["stale"])
     adapted_job_emb = detector.encoder.encode(profile["adapted"])
     
@@ -439,50 +428,72 @@ class JDAuditRequest(BaseModel):
 
 @app.post("/api/audit-jd")
 def audit_job_description(request: JDAuditRequest):
-    extracted = extract_skills_from_text(request.jd_text)
-    stale_items = [s for s in extracted if s['domain'] == 'Legacy Stack']
+    # Try LLM first for intelligent JD auditing
+    llm_audit = get_jd_audit_llm(request.jd_text, request.target_job_title)
     
-    stale_map = {
-        "hadoop": "Apache Spark / Vector Databases",
-        "mapreduce": "Apache Spark / Distributed Embeddings",
-        "svn": "Git / GitHub Actions CI/CD",
-        "subversion": "Git / GitHub Actions CI/CD",
-        "java 8": "Python 3.11+ / Modern Java 21",
-        "weka": "PyTorch / Scikit-Learn / Hugging Face",
-        "perl": "Python / FastAPI",
-        "soap": "REST APIs / gRPC / JSON",
-        "angularjs": "React 19 / Next.js 14",
-        "jquery": "React / Modern TypeScript",
-        "bootstrap 3": "Tailwind CSS",
-        "sas": "Python (Pandas, Polars)",
-        "spss": "Python / Scikit-Learn",
-        "excel vba": "Python Data Automation"
-    }
-    
-    found_stale = [s['name'] for s in stale_items]
-    replacements = []
-    for s in stale_items:
-        modern = stale_map.get(s['raw'], f"Modern {s['name']} Alternative")
-        replacements.append({"stale": s['name'], "modern": modern})
+    if llm_audit:
+        base_modernity = llm_audit.get("modernityScore", 50)
+        stale_count = len(llm_audit.get("staleKeywords", []))
+        optimized = min(98, base_modernity + (stale_count * 14) + 10)
+        
+        mod_text = request.jd_text
+        for rep in llm_audit.get("suggestedReplacements", []):
+            mod_text = re.sub(re.escape(rep['stale']), rep['modern'], mod_text, flags=re.IGNORECASE)
             
-    stale_count = len(found_stale)
-    base_modernity = max(25, 100 - (stale_count * 15))
-    optimized = min(98, base_modernity + (stale_count * 14) + 10)
-    
-    # Modernized text generation
-    mod_text = request.jd_text
-    for rep in replacements:
-        mod_text = re.sub(re.escape(rep['stale']), rep['modern'], mod_text, flags=re.IGNORECASE)
-    
-    res = {
-        "modernityScore": base_modernity,
-        "optimizedScore": optimized,
-        "staleKeywords": found_stale,
-        "suggestedReplacements": replacements,
-        "candidateReachPenalty": f"-{min(75, stale_count * 14 + 10)}% Modern Candidate Reach",
-        "verdict": "Obsolete requirements detected that suppress modern applicant conversion." if stale_count > 0 else "Clean, contemporary job description with strong modern alignment.",
-        "modernizedText": mod_text
-    }
+        res = {
+            "modernityScore": base_modernity,
+            "optimizedScore": optimized,
+            "staleKeywords": llm_audit.get("staleKeywords", []),
+            "suggestedReplacements": llm_audit.get("suggestedReplacements", []),
+            "candidateReachPenalty": f"-{min(75, stale_count * 14 + 10)}% Modern Candidate Reach",
+            "verdict": "Obsolete requirements detected." if stale_count > 0 else "Clean, contemporary job description.",
+            "modernizedText": mod_text
+        }
+    else:
+        # Fallback to static rules
+        extracted = extract_skills_from_text(request.jd_text)
+        stale_items = [s for s in extracted if s['domain'] == 'Legacy Stack']
+        
+        stale_map = {
+            "hadoop": "Apache Spark / Vector Databases",
+            "mapreduce": "Apache Spark / Distributed Embeddings",
+            "svn": "Git / GitHub Actions CI/CD",
+            "subversion": "Git / GitHub Actions CI/CD",
+            "java 8": "Python 3.11+ / Modern Java 21",
+            "weka": "PyTorch / Scikit-Learn / Hugging Face",
+            "perl": "Python / FastAPI",
+            "soap": "REST APIs / gRPC / JSON",
+            "angularjs": "React 19 / Next.js 14",
+            "jquery": "React / Modern TypeScript",
+            "bootstrap 3": "Tailwind CSS",
+            "sas": "Python (Pandas, Polars)",
+            "spss": "Python / Scikit-Learn",
+            "excel vba": "Python Data Automation"
+        }
+        
+        found_stale = [s['name'] for s in stale_items]
+        replacements = []
+        for s in stale_items:
+            modern = stale_map.get(s['raw'], f"Modern {s['name']} Alternative")
+            replacements.append({"stale": s['name'], "modern": modern})
+                
+        stale_count = len(found_stale)
+        base_modernity = max(25, 100 - (stale_count * 15))
+        optimized = min(98, base_modernity + (stale_count * 14) + 10)
+        
+        mod_text = request.jd_text
+        for rep in replacements:
+            mod_text = re.sub(re.escape(rep['stale']), rep['modern'], mod_text, flags=re.IGNORECASE)
+        
+        res = {
+            "modernityScore": base_modernity,
+            "optimizedScore": optimized,
+            "staleKeywords": found_stale,
+            "suggestedReplacements": replacements,
+            "candidateReachPenalty": f"-{min(75, stale_count * 14 + 10)}% Modern Candidate Reach",
+            "verdict": "Obsolete requirements detected that suppress modern applicant conversion." if stale_count > 0 else "Clean, contemporary job description with strong modern alignment.",
+            "modernizedText": mod_text
+        }
     
     # Save audit report to SQLite database
     try:

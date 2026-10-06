@@ -11,7 +11,8 @@ import {
   Sparkles,
   BarChart3,
   Calendar,
-  CheckCircle2
+  CheckCircle2,
+  Activity
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -100,25 +101,38 @@ const Dashboard = ({ isBackendLive }) => {
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
       
       {/* Top Welcome & Summary Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-            <h2 style={{ fontSize: '2rem', fontWeight: 800 }}>Executive Drift Overview</h2>
-            <span className="badge badge-emerald">
-              <span className="status-dot active" style={{ width: '6px', height: '6px' }} />
-              Live Observability
-            </span>
+      <div className="card" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-subtle)', padding: '24px', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: 0, right: 0, width: '300px', height: '100%', background: 'linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.05))', pointerEvents: 'none' }} />
+        
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '20px', position: 'relative', zIndex: 1 }}>
+          <div style={{ flex: 1, minWidth: '300px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+              <div style={{ padding: '8px', background: 'rgba(14, 165, 233, 0.1)', borderRadius: '8px', color: 'var(--accent-cyan)' }}>
+                <Activity size={20} />
+              </div>
+              <h2 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>Market Intelligence & Drift Detection</h2>
+              <span className="badge badge-emerald">
+                <span className="status-dot active" style={{ width: '6px', height: '6px' }} />
+                Live Observability
+              </span>
+            </div>
+            
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9375rem', lineHeight: 1.6, marginBottom: '16px', maxWidth: '800px' }}>
+              <strong>What is Concept Drift?</strong> Over time, the skills required for a job change faster than the filters used by recruiters (ATS systems). 
+              For example, modern "Software Engineers" use <em>Next.js</em> and <em>Vector Databases</em>, but older systems might reject them for lacking <em>jQuery</em> or <em>Hadoop</em>. 
+              <br/><br/>
+              SkillShift constantly scans job postings to detect <strong>emergent skills</strong> before legacy systems adapt. This dashboard tracks how rapidly new skills are replacing old ones.
+            </p>
           </div>
-          <p style={{ color: 'var(--text-secondary)', maxWidth: '750px', fontSize: '0.9375rem' }}>
-            Quantifying vocabulary evolution and semantic distribution drift in tech job postings. Detects newly emergent competencies before stale screening models penalize qualified candidates.
-          </p>
-        </div>
 
-        <Link to="/matcher" className="btn-primary" style={{ textDecoration: 'none' }}>
-          <Sparkles size={18} />
-          <span>Launch Matcher Sandbox</span>
-          <ArrowUpRight size={18} />
-        </Link>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <Link to="/matcher" className="btn-primary" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+              <Sparkles size={18} />
+              <span>Launch Matcher Sandbox</span>
+              <ArrowUpRight size={18} />
+            </Link>
+          </div>
+        </div>
       </div>
 
       {/* Top 4 KPI Executive Metric Cards */}
