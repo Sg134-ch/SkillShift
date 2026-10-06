@@ -186,7 +186,7 @@ SkillShift-main/
 
 1. **Open a new terminal window** and navigate to `frontend-react`:
    ```bash
-   cd SkillShift-main/frontend-react
+   cd SkillShift/frontend-react
    ```
 
 2. **Install frontend dependencies**:

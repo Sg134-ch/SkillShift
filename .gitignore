@@ -23,7 +23,7 @@ __pycache__/
 *.sqlite
 
 # Large Datasets (Exceeded GitHub 100MB limit & Raw Dumps)
-data/
+/data/
 *.csv
 *.tsv
 *.parquet
