@@ -55,10 +55,12 @@ SkillShift monitors real-time market data, dynamically expands baseline skill gr
 
 ## ⚡ Key Features
 
+- **🎓 Interactive Student Portal**: A dedicated interface for candidates to manage their profiles, track application statuses, upload certificates, and generate customized AI learning roadmaps for missing skills.
+- **🔒 Live GitHub Proof-of-Work Verification**: Instead of relying on self-reported skills, the platform connects to a candidate's GitHub via API, scans public repositories, and auto-verifies technical competencies (like Python, React, Machine Learning) based on actual code.
+- **📈 Dynamic Trust Score System**: Evaluates the reliability of a candidate's resume by comparing "Claimed Skills" against "Verified Skills" backed by digital evidence (GitHub repos or course certificates).
 - **📊 Executive Drift Dashboard**: Real-time KPI cards tracking vocabulary growth (+21.4%), cumulative vocabulary expansion curves, and monthly OOD skill inflow charts.
 - **🎯 Dual-Model Resume Matcher Studio**: Side-by-side evaluation of candidates against job archetypes with automatic diagnostic breakdowns explaining exact penalty rationale and recovery delta.
 - **🕸️ Interactive Skill Co-Occurrence Network**: Force-directed, physics-enabled graph visualization (`vis-network`) mapping semantic skill clusters and cross-domain bridges (e.g., Python ↔ LangChain ↔ LLMs).
-- **📡 Multi-Dimensional Drift Radar**: Domain-specific emergence monitoring across Generative AI, Cloud/DevOps, Classical Data Science, and Modern Web.
 - **🛡️ High-Fidelity Fallback & Offline Resilience**: Seamless zero-crash execution featuring lightweight hash-based semantic encoders and simulated market datasets when offline or running without heavy PyTorch dependencies.
 
 ---
