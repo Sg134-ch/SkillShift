@@ -114,7 +114,7 @@ def parse_document_content(filename: str, content: bytes) -> str:
                 return clean
         except Exception:
             pass
-        return f"Resume from {filename}: Specialized in Machine Learning, Python, PyTorch, LangChain, RAG, Vector Databases, FastAPI, Docker, and Cloud Systems."
+        return ""
         
     elif lower_fn.endswith('.docx') or lower_fn.endswith('.doc'):
         try:
