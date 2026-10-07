@@ -115,11 +115,11 @@ const Matcher = ({ isBackendLive }) => {
           const rawString = typeof buffer === 'string' ? buffer : textDecoder.decode(new Uint8Array(buffer));
           const extracted = rawString.replace(/[^\x20-\x7E\n]/g, ' ').replace(/\s+/g, ' ').trim();
           updateState({
-            resumeText: extracted.length > 50 ? extracted.slice(0, 2500) : `Candidate Resume (${file.name}): Specialized in Python, PyTorch, LangChain, RAG architectures, Vector DBs, FastAPI, and Docker.`
+            resumeText: extracted.length > 50 ? extracted.slice(0, 2500) : `Candidate Resume (${file.name}): No text extracted`
           });
         } catch {
           updateState({
-            resumeText: `Candidate Resume (${file.name}): Python, Machine Learning, Data Science, Cloud Infrastructure.`
+            resumeText: `Candidate Resume (${file.name}): No text extracted`
           });
         }
         setLoading(false);
