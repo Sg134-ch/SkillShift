@@ -236,9 +236,10 @@ export const evaluateResumeMatch = async (resumeText, targetJobTitle, forceSimul
   return {
     score_before_adaptation: scoreBefore,
     score_after_adaptation: scoreAfter,
-    recognized_baseline: foundBase.map(s => s.charAt(0).toUpperCase() + s.slice(1)),
-    missing_skills_flagged: foundLegacy.map(s => s.charAt(0).toUpperCase() + s.slice(1)),
-    true_missing: trueMissing.map(s => s.charAt(0).toUpperCase() + s.slice(1)),
+    candidate_skills: [...foundBase, ...foundLegacy, ...foundOod].map(s => s.charAt(0).toUpperCase() + s.slice(1)),
+    required_skills_found: [...foundBase, ...foundOod].map(s => s.charAt(0).toUpperCase() + s.slice(1)),
+    outdated_skills: foundLegacy.map(s => s.charAt(0).toUpperCase() + s.slice(1)),
+    missing_skills: trueMissing.map(s => s.charAt(0).toUpperCase() + s.slice(1)),
     explanation,
     isLive: false
   };

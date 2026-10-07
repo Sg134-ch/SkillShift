@@ -87,6 +87,10 @@ class MatchResponse(BaseModel):
     missing_skills_flagged: List[str]
     explanation: str
     roadmap: Optional[Dict[str, Any]] = None
+    candidate_skills: List[str] = []
+    required_skills_found: List[str] = []
+    outdated_skills: List[str] = []
+    missing_skills: List[str] = []
 
 @app.get("/")
 async def read_root():
@@ -97,13 +101,13 @@ def parse_document_content(filename: str, content: bytes) -> str:
     lower_fn = filename.lower()
     if lower_fn.endswith('.pdf'):
         try:
-            import pypdf
+            from pdfminer.high_level import extract_text
             import io
-            reader = pypdf.PdfReader(io.BytesIO(content))
-            text = " ".join([page.extract_text() for page in reader.pages if page.extract_text()])
-            if len(text.strip()) > 30:
+            text = extract_text(io.BytesIO(content))
+            if text and len(text.strip()) > 30:
                 return text.strip()
-        except Exception:
+        except Exception as e:
+            print(f"PDF extraction error: {e}")
             pass
             
         try:
@@ -170,9 +174,18 @@ def match_resume(request: ResumeRequest):
     
     profile = get_job_profile_from_db(request.target_job_title)
     if not profile:
-        profile = get_job_profile_from_db("Machine Learning Engineer")
-        if not profile:
-            profile = {"stale": "", "adapted": ""}
+        # Dynamic fallback based on title
+        title_lower = request.target_job_title.lower()
+        if 'frontend' in title_lower or 'web' in title_lower or 'react' in title_lower:
+            profile = {"stale": "HTML, CSS, JavaScript, jQuery, Bootstrap", "adapted": "React, Next.js, TypeScript, Tailwind CSS, GraphQL"}
+        elif 'backend' in title_lower or 'software' in title_lower:
+            profile = {"stale": "Java, Spring, SQL, SOAP, XML", "adapted": "Python, FastAPI, Docker, Kubernetes, AWS, Microservices"}
+        elif 'data' in title_lower or 'analyst' in title_lower:
+            profile = {"stale": "Excel, VBA, SQL, Tableau, SPSS", "adapted": "Python, Pandas, Snowflake, dbt, Power BI, SQL"}
+        else:
+            profile = get_job_profile_from_db("Machine Learning Engineer")
+            if not profile:
+                profile = {"stale": "Python, Scikit-learn, Pandas", "adapted": "PyTorch, LangChain, RAG, LLMs, Docker"}
     
     stale_job_emb = detector.encoder.encode(profile["stale"])
     adapted_job_emb = detector.encoder.encode(profile["adapted"])
@@ -206,6 +219,15 @@ def match_resume(request: ResumeRequest):
     candidate_skills = {s['name'] for s in extracted}
     true_missing = list(modern_skills_in_profile - candidate_skills)
     
+    # Calculate new categories for UI
+    candidate_skills_list = [s['name'] for s in extracted]
+    print(f'DEBUG candidate_skills_list: {candidate_skills_list}')
+    print(f'DEBUG extracted: {extracted}')
+    outdated_skills_list = flagged_stale
+    
+    modern_reqs = {s['name'] for s in extract_skills_from_text(profile.get("adapted", ""))}
+    required_found = list(set(candidate_skills_list).intersection(modern_reqs))
+    
     roadmap = None
     if true_missing:
         # Only take top 5 missing skills to keep the prompt focused
@@ -216,7 +238,11 @@ def match_resume(request: ResumeRequest):
         score_after_adaptation=adapted_score,
         missing_skills_flagged=flagged_ood,
         explanation=explanation,
-        roadmap=roadmap
+        roadmap=roadmap,
+        candidate_skills=candidate_skills_list,
+        required_skills_found=required_found,
+        outdated_skills=outdated_skills_list,
+        missing_skills=true_missing
     )
 
 @app.get("/api/drift-metrics")

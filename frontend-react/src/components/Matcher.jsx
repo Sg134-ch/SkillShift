@@ -614,21 +614,21 @@ const Matcher = ({ isBackendLive }) => {
                   </h4>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginBottom: '24px' }}>
                   
-                  {/* Recognized Baseline (What they have - Good) */}
-                  <div style={{ padding: '16px', background: 'var(--bg-canvas)', borderRadius: '10px', borderTop: '3px solid var(--accent-emerald)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {/* All Skills Found */}
+                  <div style={{ padding: '16px', background: 'var(--bg-canvas)', borderRadius: '10px', borderTop: '3px solid var(--accent-blue)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <CheckCircle2 size={16} color="var(--accent-emerald)" />
+                      <CheckCircle2 size={16} color="var(--accent-blue)" />
                       <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                        Recognized Core ({result.recognized_baseline?.length || 0})
+                        Skills Mentioned ({result.candidate_skills?.length || 0})
                       </span>
                     </div>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>Baseline competencies aligned with target role.</p>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>All technical skills detected in your resume.</p>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                      {result.recognized_baseline && result.recognized_baseline.length > 0 ? (
-                        result.recognized_baseline.map((skill, idx) => (
-                          <span key={idx} className="badge" style={{ fontSize: '0.75rem', background: 'rgba(52, 211, 153, 0.1)', color: 'var(--accent-emerald)', border: '1px solid rgba(52, 211, 153, 0.2)' }}>
+                      {result.candidate_skills && result.candidate_skills.length > 0 ? (
+                        result.candidate_skills.map((skill, idx) => (
+                          <span key={idx} className="badge" style={{ fontSize: '0.75rem', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--accent-blue)', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
                             {skill}
                           </span>
                         ))
@@ -638,50 +638,71 @@ const Matcher = ({ isBackendLive }) => {
                     </div>
                   </div>
 
-                  {/* Flagged Outdated (What they have - Bad/Legacy) */}
-                  <div style={{ padding: '16px', background: 'var(--bg-canvas)', borderRadius: '10px', borderTop: '3px solid var(--accent-amber)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {/* Required Found */}
+                  <div style={{ padding: '16px', background: 'var(--bg-canvas)', borderRadius: '10px', borderTop: '3px solid var(--accent-emerald)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <AlertTriangle size={16} color="var(--accent-amber)" />
+                      <CheckCircle2 size={16} color="var(--accent-emerald)" />
                       <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                        Flagged / Outdated ({result.missing_skills_flagged?.length || 0})
+                        Required for Role ({result.required_skills_found?.length || 0})
                       </span>
                     </div>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>Skills penalized as legacy or out-of-distribution.</p>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>Resume skills that match modern job demands.</p>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                      {result.missing_skills_flagged && result.missing_skills_flagged.length > 0 ? (
-                        result.missing_skills_flagged.map((skill, idx) => (
-                          <span key={idx} className="badge" style={{ fontSize: '0.75rem', background: 'rgba(251, 191, 36, 0.1)', color: 'var(--accent-amber)', border: '1px solid rgba(251, 191, 36, 0.2)' }}>
+                      {result.required_skills_found && result.required_skills_found.length > 0 ? (
+                        result.required_skills_found.map((skill, idx) => (
+                          <span key={idx} className="badge" style={{ fontSize: '0.75rem', background: 'rgba(52, 211, 153, 0.1)', color: 'var(--accent-emerald)', border: '1px solid rgba(52, 211, 153, 0.2)' }}>
                             {skill}
                           </span>
                         ))
                       ) : (
-                        <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>None</span>
+                        <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>None matched</span>
                       )}
                     </div>
                   </div>
 
-                  {/* Missing Modern Skills (What they need) */}
+                  {/* Outdated */}
+                  <div style={{ padding: '16px', background: 'var(--bg-canvas)', borderRadius: '10px', borderTop: '3px solid var(--accent-amber)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <AlertTriangle size={16} color="var(--accent-amber)" />
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                        Outdated for Role ({result.outdated_skills?.length || 0})
+                      </span>
+                    </div>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>Legacy skills that reduce modern ATS ranking.</p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {result.outdated_skills && result.outdated_skills.length > 0 ? (
+                        result.outdated_skills.map((skill, idx) => (
+                          <span key={idx} className="badge" style={{ fontSize: '0.75rem', background: 'rgba(245, 158, 11, 0.1)', color: 'var(--accent-amber)', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+                            {skill}
+                          </span>
+                        ))
+                      ) : (
+                        <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>None flagged</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Missing */}
                   <div style={{ padding: '16px', background: 'var(--bg-canvas)', borderRadius: '10px', borderTop: '3px solid var(--accent-rose)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <Zap size={16} color="var(--accent-rose)" />
                       <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                        Missing Modern Skills ({result.true_missing?.length || 0})
+                        Skills to Learn ({result.missing_skills?.length || 0})
                       </span>
                     </div>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>Critical gaps required for 2024 hiring standards.</p>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>Required skills currently missing from resume.</p>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                      {result.true_missing && result.true_missing.length > 0 ? (
-                        result.true_missing.map((skill, idx) => (
+                      {result.missing_skills && result.missing_skills.length > 0 ? (
+                        result.missing_skills.map((skill, idx) => (
                           <span key={idx} className="badge" style={{ fontSize: '0.75rem', background: 'rgba(244, 63, 94, 0.1)', color: 'var(--accent-rose)', border: '1px solid rgba(244, 63, 94, 0.2)' }}>
                             {skill}
                           </span>
                         ))
                       ) : (
-                        <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>None identified</span>
+                        <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>No gaps found</span>
                       )}
                     </div>
                   </div>
-
                 </div>
               </div>
 
