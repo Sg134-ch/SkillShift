@@ -76,16 +76,7 @@ const Matcher = ({ isBackendLive }) => {
       targetRole: preset.targetJobTitle,
       resumeText: preset.resumeText,
       verifiedSkills: candidateRecruiterProfile ? (candidateRecruiterProfile.verifiedSkills || []) : [],
-      result: {
-        score_before_adaptation: preset.scores.stale,
-        score_after_adaptation: preset.scores.adapted,
-        missing_skills_flagged: preset.flaggedSkills,
-        recognized_baseline: preset.recognizedBaseline,
-        true_missing: preset.trueMissing || [],
-        explanation: preset.explanation,
-        dimensions: preset.dimensions,
-        isLive: false
-      }
+      result: null // DO NOT pre-populate results so the user has to click Evaluate
     });
     setError('');
   };
@@ -212,18 +203,18 @@ const Matcher = ({ isBackendLive }) => {
     }
   };
 
-  const scoreBeforePct = Math.round(result.score_before_adaptation * 100);
-  const scoreAfterPct = Math.round(result.score_after_adaptation * 100);
+  const scoreBeforePct = result ? Math.round(result.score_before_adaptation * 100) : 0;
+  const scoreAfterPct = result ? Math.round(result.score_after_adaptation * 100) : 0;
   const deltaPct = scoreAfterPct - scoreBeforePct;
 
-  const rawRoadmap = result.roadmap || generateLearningRoadmap(result.true_missing?.length > 0 ? result.true_missing : (result.missing_skills_flagged || []), targetRole);
-  const finalRoadmap = {
+  const rawRoadmap = result ? (result.roadmap || generateLearningRoadmap(result.true_missing?.length > 0 ? result.true_missing : (result.missing_skills_flagged || []), targetRole)) : null;
+  const finalRoadmap = rawRoadmap ? {
     trackTitle: rawRoadmap.targetRole ? `Personalized ${rawRoadmap.targetRole} Plan` : rawRoadmap.trackTitle,
     overview: rawRoadmap.careerImpact || rawRoadmap.overview,
     targetScoreImpact: rawRoadmap.estimatedTotalDuration || rawRoadmap.targetScoreImpact,
     milestones: rawRoadmap.stages || rawRoadmap.milestones,
     mermaidFlowchart: rawRoadmap.mermaidFlowchart
-  };
+  } : null;
 
   const lowerResume = resumeText.toLowerCase();
   const matchedCompanies = mockCompanyDemands.map(comp => {
@@ -493,7 +484,17 @@ const Matcher = ({ isBackendLive }) => {
         {/* Right Side: Comparison Studio, Roadmap & Company Matches */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
-          {/* Top Result Navigation Tabs */}
+          {!result ? (
+            <div className="card" style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', height: '100%', justifyContent: 'center', borderStyle: 'dashed' }}>
+              <Sparkles size={40} color="var(--border-strong)" />
+              <div>
+                <h4 style={{ color: 'var(--text-primary)', marginBottom: '8px', fontSize: '1.25rem' }}>Ready to Analyze</h4>
+                <p style={{ margin: 0, fontSize: '0.9375rem', maxWidth: '300px' }}>Click <strong>Evaluate Concept Drift Impact</strong> to begin the dual-model analysis.</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Top Result Navigation Tabs */}
           <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '8px' }}>
             <button
               onClick={() => setActiveTab('diagnostic')}
@@ -863,6 +864,9 @@ const Matcher = ({ isBackendLive }) => {
                 ))}
               </div>
             </div>
+          )}
+          
+            </>
           )}
 
         </div>
