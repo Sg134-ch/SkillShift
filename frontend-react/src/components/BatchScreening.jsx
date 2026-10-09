@@ -447,9 +447,24 @@ const BatchScreening = ({ isBackendLive }) => {
             <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
               Active Cohort ({candidates.length} Profiles):
             </span>
-            {uploadedFiles.map((f, idx) => (
-              <span key={idx} className="badge badge-indigo" style={{ fontSize: '0.6875rem' }}>
-                {f.name} ({f.size})
+            <button 
+              onClick={handleClearAll}
+              className="btn-secondary"
+              style={{ fontSize: '0.65rem', padding: '2px 8px', color: 'var(--accent-rose)', border: '1px solid var(--accent-rose)', borderRadius: '4px', background: 'transparent' }}
+            >
+              Clear All
+            </button>
+            <button 
+              onClick={handleResetPresets}
+              className="btn-secondary"
+              style={{ fontSize: '0.65rem', padding: '2px 8px', border: '1px solid var(--border-subtle)', borderRadius: '4px', background: 'transparent' }}
+            >
+              Load Demo
+            </button>
+            {candidates.map((c) => (
+              <span key={c.id} className="badge badge-indigo" style={{ fontSize: '0.6875rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                {c.name}
+                <X size={12} style={{ cursor: 'pointer', opacity: 0.7 }} onClick={(e) => handleRemoveCandidate(c.id, e)} />
               </span>
             ))}
           </div>
